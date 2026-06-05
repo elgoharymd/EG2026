@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تقييم مسابقه الاطفال العلماء</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f9f9f9; }
+        h1 { text-align: center; color: #333; }
+        .controls { background: white; padding: 20px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; align-items: center; }
+        .sheet { display: flex; flex-direction: column; gap: 10px; overflow-x: auto; }
+        
+        table.excel-table { border-collapse: collapse; width: max-content; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table.excel-table th, table.excel-table td { 
+            border: 1px solid #ccc; 
+            padding: 5px; 
+            min-width: 60px; 
+            text-align: center; 
+            resize: both; 
+            overflow: auto;
+            font-weight: bold;
+        }
+        
+        table.excel-table th { background-color: #f2f2f2; }
+        .merged-header { background-color: #d9edf7 !important; border-bottom: 2px solid #31708f !important; }
+        
+        [contenteditable] { outline: none; transition: background-color 0.2s; }
+        [contenteditable]:focus { background-color: #fff9c4; border: 1px solid #fbc02d; }
+        
+        input[type="number"], input[type="color"], select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 120px; }
+        button { padding: 10px 20px; background-color: #1900ff; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #1900ff; }
+        .save-btn { background-color: #1900ff; }
+        .save-btn:hover { background-color: #1900ff; }
+        .load-btn { background-color: #ff9800; margin-right: 10px; }
+        .load-btn:hover { background-color: #f57c00; }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #3b28a7;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { top: -50px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>التقييم ت</h1>
+    
+    <div class="controls">
+        <input type="number" id="cWidth" placeholder="عرض العمود (px)">
+        <input type="number" id="cHeight" placeholder="طول الخلية (px)">
+        <input type="color" id="bgColor" title="لون الخلفية" value="#ffffff">
+        <input type="color" id="txtColor" title="لون النص" value="#000000">
+        <input type="number" id="fontSize" placeholder="حجم الخط" value="14" style="width: 70px;">
+        <select id="mergeType">
+            <option value="none">بدون دمج</option>
+            <option value="4col">دمج 4 أعمدة فرعية</option>
+        </select>
+        <button onclick="addColumn()">إضافة عمود/تخطيط جديد</button>
+        <button onclick="saveToFirebase()" class="save-btn">حفظ</button>
+    </div>
+
+    <div id="sheet" class="sheet">
+        <table class="excel-table" id="excel-table">
+            <thead>
+                <tr id="header-main"></tr>
+                <tr id="header-sub"><tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1l8nT513tibSwVHj7HWbLb6nCXQF8Beg",
+            authDomain: "mdhh-9918e.firebaseapp.com",
+            databaseURL: "https://mdhh-9918e-default-rtdb.firebaseio.com",
+            projectId: "mdhh-9918e",
+            storageBucket: "mdhh-9918e.firebasestorage.app",
+            messagingSenderId: "657027749633",
+            appId: "1:657027749633:web:2df00b3b8e425d9834ad00",
+            measurementId: "G-L9FT9SCJF5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        let colCount = 0;
+
+        function showNotification(message, isError = false) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            notification.style.backgroundColor = isError ? '#dc3545' : '#28a745';
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 2000);
+        }
+
+        function addColumn() {
+            const width = document.getElementById('cWidth').value || '60';
+            const height = document.getElementById('cHeight').value || '25';
+            const bgColor = document.getElementById('bgColor').value;
+            const txtColor = document.getElementById('txtColor').value;
+            const fontSize = document.getElementById('fontSize').value;
+            const mergeType = document.getElementById('mergeType').value;
+
+            const headerMain = document.getElementById('header-main');
+            const headerSub = document.getElementById('header-sub');
+            const tableBody = document.getElementById('table-body');
+
+            if (mergeType === '4col') {
+                const mainTh = document.createElement('th');
+                mainTh.className = 'merged-header';
+                mainTh.colSpan = 4;
+                mainTh.innerText = 'الفكرة';
+                mainTh.contentEditable = true;
+                headerMain.appendChild(mainTh);
+
+                for (let i = 1; i <= 4; i++) {
+                    const subTh = document.createElement('th');
+                    subTh.contentEditable = true;
+                    subTh.innerText = 'محكم ' + (colCount + i);
+                    subTh.style.minWidth = width + 'px';
+                    subTh.style.backgroundColor = '#f2f2f2';
+                    headerSub.appendChild(subTh);
+                }
+                
+                for (let row of tableBody.rows) {
+                    for (let i = 0; i < 4; i++) addCellToRow(row, height, bgColor, txtColor, fontSize);
+                }
+                colCount += 4;
+            } else {
+                const th = document.createElement('th');
+                th.contentEditable = true;
+                th.innerText = 'عمود ' + (++colCount);
+                th.style.minWidth = width + 'px';
+                headerMain.appendChild(th);
+                
+                const subTh = document.createElement('th');
+                subTh.style.visibility = 'hidden'; 
+                headerSub.appendChild(subTh);
+
+                for (let row of tableBody.rows) addCellToRow(row, height, bgColor, txtColor, fontSize);
+            }
+        }
+
+        function addCellToRow(row, height, bgColor, txtColor, fontSize) {
+            const cell = document.createElement('td');
+            cell.contentEditable = true;
+            cell.style.height = height + 'px';
+            cell.style.backgroundColor = bgColor;
+            cell.style.color = txtColor;
+            cell.style.fontSize = fontSize + 'px';
+            row.appendChild(cell);
+        }
+
+        function addEmptyRow() {
+            const tableBody = document.getElementById('table-body');
+            const row = document.createElement('tr');
+            const height = document.getElementById('cHeight').value || '25';
+            const bgColor = document.getElementById('bgColor').value;
+            const txtColor = document.getElementById('txtColor').value;
+            const fontSize = document.getElementById('fontSize').value;
+            
+            for(let i = 0; i < (colCount || 1); i++) {
+                addCellToRow(row, height, bgColor, txtColor, fontSize);
+            }
+            tableBody.appendChild(row);
+        }
+
+        async function saveToFirebase() {
+            // حفظ كل شيء: رؤوس الأعمدة الرئيسية والفرعية
+            const headersMain = [];
+            const headersSub = [];
+            const cells = [];
+            const columnWidths = [];
+            
+            // حفظ الرؤوس الرئيسية مع كل التفاصيل
+            const mainThs = document.querySelectorAll('#header-main th');
+            mainThs.forEach(th => {
+                headersMain.push({
+                    text: th.innerText,
+                    colSpan: th.colSpan || 1,
+                    className: th.className,
+                    style: {
+                        minWidth: th.style.minWidth,
+                        backgroundColor: th.style.backgroundColor
+                    }
+                });
+            });
+            
+            // حفظ الرؤوس الفرعية مع عرض الأعمدة
+            const subThs = document.querySelectorAll('#header-sub th');
+            subThs.forEach(th => {
+                headersSub.push({
+                    text: th.innerText,
+                    visibility: th.style.visibility,
+                    minWidth: th.style.minWidth,
+                    backgroundColor: th.style.backgroundColor
+                });
+                if (th.style.minWidth) columnWidths.push(th.style.minWidth);
+            });
+            
+            // حفظ جميع الخلايا مع كل التفاصيل
+            const rows = document.querySelectorAll('#table-body tr');
+            rows.forEach(row => {
+                const rowData = [];
+                const cellsInRow = row.querySelectorAll('td');
+                cellsInRow.forEach(cell => {
+                    rowData.push({
+                        text: cell.innerText,
+                        backgroundColor: cell.style.backgroundColor,
+                        color: cell.style.color,
+                        fontSize: cell.style.fontSize,
+                        height: cell.style.height,
+                        width: cell.style.width
+                    });
+                });
+                cells.push(rowData);
+            });
+            
+            // حفظ إعدادات التحكم الحالية
+            const currentSettings = {
+                cWidth: document.getElementById('cWidth').value,
+                cHeight: document.getElementById('cHeight').value,
+                bgColor: document.getElementById('bgColor').value,
+                txtColor: document.getElementById('txtColor').value,
+                fontSize: document.getElementById('fontSize').value,
+                mergeType: document.getElementById('mergeType').value
+            };
+            
+            const dataToSave = {
+                colCount: colCount,
+                headersMain: headersMain,
+                headersSub: headersSub,
+                cells: cells,
+                columnWidths: columnWidths,
+                settings: currentSettings,
+                timestamp: Date.now()
+            };
+            
+            try {
+                await set(ref(database, 'excelData'), dataToSave);
+                showNotification(' تم حفظ كل شيء بنجاح)');
+            } catch (error) {
+                console.error('خطأ في الحفظ:', error);
+                showNotification(' حدث خطأ في حفظ البيانات', true);
+            }
+        }
+
+        async function loadFromFirebase() {
+            try {
+                showNotification('⏳ جاري تحميل البيانات...');
+                const snapshot = await get(ref(database, 'excelData'));
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    colCount = data.colCount;
+                    
+                    // استعادة إعدادات التحكم
+                    if (data.settings) {
+                        if (data.settings.cWidth) document.getElementById('cWidth').value = data.settings.cWidth;
+                        if (data.settings.cHeight) document.getElementById('cHeight').value = data.settings.cHeight;
+                        if (data.settings.bgColor) document.getElementById('bgColor').value = data.settings.bgColor;
+                        if (data.settings.txtColor) document.getElementById('txtColor').value = data.settings.txtColor;
+                        if (data.settings.fontSize) document.getElementById('fontSize').value = data.settings.fontSize;
+                        if (data.settings.mergeType) document.getElementById('mergeType').value = data.settings.mergeType;
+                    }
+                    
+                    // مسح الجدول الحالي
+                    const headerMain = document.getElementById('header-main');
+                    const headerSub = document.getElementById('header-sub');
+                    const tableBody = document.getElementById('table-body');
+                    
+                    headerMain.innerHTML = '';
+                    headerSub.innerHTML = '';
+                    tableBody.innerHTML = '';
+                    
+                    // إعادة بناء الرؤوس الرئيسية
+                    data.headersMain.forEach(main => {
+                        const th = document.createElement('th');
+                        th.innerText = main.text;
+                        if (main.colSpan) th.colSpan = main.colSpan;
+                        if (main.className) th.className = main.className;
+                        if (main.style) {
+                            if (main.style.minWidth) th.style.minWidth = main.style.minWidth;
+                            if (main.style.backgroundColor) th.style.backgroundColor = main.style.backgroundColor;
+                        }
+                        th.contentEditable = true;
+                        headerMain.appendChild(th);
+                    });
+                    
+                    // إعادة بناء الرؤوس الفرعية
+                    data.headersSub.forEach((sub, index) => {
+                        const th = document.createElement('th');
+                        th.innerText = sub.text;
+                        if (sub.visibility) th.style.visibility = sub.visibility;
+                        if (sub.minWidth) th.style.minWidth = sub.minWidth;
+                        if (sub.backgroundColor) th.style.backgroundColor = sub.backgroundColor;
+                        th.contentEditable = true;
+                        headerSub.appendChild(th);
+                    });
+                    
+                    // إعادة بناء الخلايا مع كل تنسيقاتها
+                    data.cells.forEach(rowData => {
+                        const row = document.createElement('tr');
+                        rowData.forEach(cellData => {
+                            const cell = document.createElement('td');
+                            cell.innerText = cellData.text;
+                            cell.contentEditable = true;
+                            if (cellData.backgroundColor) cell.style.backgroundColor = cellData.backgroundColor;
+                            if (cellData.color) cell.style.color = cellData.color;
+                            if (cellData.fontSize) cell.style.fontSize = cellData.fontSize;
+                            if (cellData.height) cell.style.height = cellData.height;
+                            if (cellData.width) cell.style.width = cellData.width;
+                            row.appendChild(cell);
+                        });
+                        tableBody.appendChild(row);
+                    });
+                    
+                    showNotification(' تم التحميل )');
+                } else {
+                    showNotification(' لا توجد بيانات محفوظة. سيتم إنشاء جدول جديد.', true);
+                    // تهيئة الجدول الافتراضي
+                    colCount = 0;
+                    addColumn();
+                    for(let i = 0; i < 100; i++) addEmptyRow();
+                }
+            } catch (error) {
+                console.error('خطأ في التحميل:', error);
+                showNotification('حدث خطأ في تحميل البيانات', true);
+                // تهيئة الجدول الافتراضي في حالة الخطأ
+                if (document.querySelectorAll('#table-body tr').length === 0) {
+                    colCount = 0;
+                    addColumn();
+                    for(let i = 0; i < 100; i++) addEmptyRow();
+                }
+            }
+        }
+
+        // دالة لحفظ تلقائي كل 30 ثانية (اختياري)
+        let autoSaveInterval;
+        function startAutoSave() {
+            if (autoSaveInterval) clearInterval(autoSaveInterval);
+            autoSaveInterval = setInterval(() => {
+                saveToFirebase();
+            }, 30000);
+        }
+
+        window.onload = function() {
+            loadFromFirebase();
+            startAutoSave();
+        };
+        
+        window.addColumn = addColumn;
+        window.saveToFirebase = saveToFirebase;
+        window.loadFromFirebase = loadFromFirebase;
+    </script>
+</body>
+</html>
