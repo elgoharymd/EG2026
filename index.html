@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>تقييم مسابقه الاطفال العلماء</title>
-    <style>
+<style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f9f9f9; }
         h1 { text-align: center; color: #333; }
         .controls { background: white; padding: 20px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; align-items: center; }
@@ -54,6 +54,39 @@
             animation: slideDown 0.3s ease-out;
         }
         
+        .password-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .password-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            direction: rtl;
+        }
+        .password-box input {
+            padding: 10px;
+            font-size: 18px;
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            width: 200px;
+            text-align: center;
+        }
+        .password-box button {
+            margin: 5px;
+            padding: 10px 20px;
+        }
+        
         @keyframes slideDown {
             from { top: -50px; opacity: 0; }
             to { top: 20px; opacity: 1; }
@@ -80,14 +113,15 @@
         <button onclick="deleteColumn()" class="delete-col-btn">حذف عمود</button>
         <button onclick="deleteRow()" class="delete-row-btn">حذف صف</button>
         <button onclick="createBackup()" class="backup-btn">نسخه احتياطيه</button>
-        <button onclick="formatDatabase()" class="format-btn">🗑️ فرمته قاعده البيانات</button>
+        <button onclick="showPasswordModal('format')" class="format-btn">🗑️ فرمته قاعده البيانات</button>
+        <button onclick="showPasswordModal('database')" class="delete-database-btn">🔥 حذف قاعده البيانات</button>
     </div>
 
     <div id="sheet" class="sheet">
         <table class="excel-table" id="excel-table">
             <thead>
-                <tr id="header-main"><tr>
-                <tr id="header-sub"></td>
+                <tr id="header-main"></tr>
+                <tr id="header-sub"></tr>
             </thead>
             <tbody id="table-body"></tbody>
         </table>
@@ -112,6 +146,7 @@
         const database = getDatabase(app);
         
         let colCount = 1;
+        const PASSWORD = "246811";
 
         function showNotification(message, isError = false) {
             const notification = document.createElement('div');
@@ -120,6 +155,45 @@
             notification.style.backgroundColor = isError ? '#dc3545' : '#28a745';
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 2000);
+        }
+
+        function showPasswordModal(action) {
+            const modal = document.createElement('div');
+            modal.className = 'password-modal';
+            modal.innerHTML = `
+                <div class="password-box">
+                    <h3>🔐 ادخل كلمه المرور</h3>
+                    <input type="password" id="passwordInput" placeholder="********" autocomplete="off">
+                    <br>
+                    <button onclick="this.closest('.password-modal').remove()">إلغاء</button>
+                    <button id="confirmPasswordBtn">تأكيد</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            const input = modal.querySelector('#passwordInput');
+            const confirmBtn = modal.querySelector('#confirmPasswordBtn');
+            
+            const checkPassword = () => {
+                if (input.value === PASSWORD) {
+                    modal.remove();
+                    if (action === 'format') {
+                        formatDatabase();
+                    } else if (action === 'database') {
+                        deleteDatabase();
+                    }
+                } else {
+                    showNotification('❌ كلمه المرور خاطئه!', true);
+                    input.value = '';
+                    input.focus();
+                }
+            };
+            
+            confirmBtn.onclick = checkPassword;
+            input.onkeypress = (e) => {
+                if (e.key === 'Enter') checkPassword();
+            };
+            input.focus();
         }
 
         function createNewTable() {
@@ -163,44 +237,41 @@
         }
 
         async function formatDatabase() {
-            if (confirm('⚠️ تحذير خطير جداً! ⚠️\n\nأنت على وشك فرمته قاعدة البيانات بالكامل.\nسيتم حذف:\n- جميع البيانات الموجودة في الجدول\n- جميع النسخ الاحتياطية\n- لن تتمكن من استعادة أي شيء\n\nهل أنت متأكد تماماً؟')) {
+            try {
+                showNotification('⏳ جاري فرمته قاعدة البيانات...');
                 
-                const confirmAgain = confirm('✅ تأكيد نهائي: اكتب "نعم" للموافقة على فرمته قاعدة البيانات');
+                const excelDataRef = ref(database, 'excelData');
+                const backupsRef = ref(database, 'backups');
                 
-                if (confirmAgain) {
-                    try {
-                        showNotification('⏳ جاري فرمته قاعدة البيانات...');
-                        
-                        // حذف جميع البيانات من Firebase
-                        const excelDataRef = ref(database, 'excelData');
-                        const backupsRef = ref(database, 'backups');
-                        
-                        await remove(excelDataRef);
-                        await remove(backupsRef);
-                        
-                        // حذف أي بيانات أخرى可能在 Firebase
-                        const rootRef = ref(database, '/');
-                        
-                        // إنشاء جدول جديد فارغ
-                        createNewTable();
-                        
-                        // حفظ الجدول الفارغ
-                        await saveToFirebase();
-                        
-                        showNotification('✅ تم فرمته قاعدة البيانات بالكامل بنجاح');
-                        
-                        // عرض رسالة تأكيد إضافية
-                        setTimeout(() => {
-                            showNotification('🗑️ قاعدة البيانات الآن فارغة بالكامل');
-                        }, 1500);
-                        
-                    } catch (error) {
-                        console.error('خطأ في فرمته البيانات:', error);
-                        showNotification('❌ حدث خطأ في فرمته قاعدة البيانات', true);
-                    }
-                } else {
-                    showNotification('تم إلغاء فرمته قاعدة البيانات');
-                }
+                await remove(excelDataRef);
+                await remove(backupsRef);
+                
+                createNewTable();
+                await saveToFirebase();
+                
+                showNotification('✅ تم فرمته قاعده البيانات بالكامل بنجاح');
+            } catch (error) {
+                console.error('خطأ:', error);
+                showNotification('❌ حدث خطأ', true);
+            }
+        }
+
+        async function deleteDatabase() {
+            try {
+                showNotification('⏳ جاري حذف قاعده البيانات...');
+                
+                const excelDataRef = ref(database, 'excelData');
+                const backupsRef = ref(database, 'backups');
+                
+                await remove(excelDataRef);
+                await remove(backupsRef);
+                
+                createNewTable();
+                
+                showNotification('✅ تم حذف قاعده البيانات بالكامل بنجاح');
+            } catch (error) {
+                console.error('خطأ:', error);
+                showNotification('❌ حدث خطأ', true);
             }
         }
 
@@ -555,7 +626,9 @@
         window.deleteColumn = deleteColumn;
         window.deleteRow = deleteRow;
         window.createBackup = createBackup;
+        window.showPasswordModal = showPasswordModal;
         window.formatDatabase = formatDatabase;
+        window.deleteDatabase = deleteDatabase;
     </script>
 </body>
 </html>
