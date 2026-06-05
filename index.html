@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>تقييم مسابقه الاطفال العلماء</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f9f9f9; }
@@ -30,9 +31,12 @@
         button { padding: 10px 20px; background-color: #1900ff; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
         button:hover { background-color: #1900ff; }
         .save-btn { background-color: #1900ff; }
-        .save-btn:hover { background-color: #1900ff; }
-        .load-btn { background-color: #ff9800; margin-right: 10px; }
-        .load-btn:hover { background-color: #f57c00; }
+        .delete-all-btn { background-color: #dc3545; }
+        .delete-col-btn { background-color: #ffc107; color: #000; }
+        .backup-btn { background-color: #17a2b8; }
+        .delete-database-btn { background-color: #8B0000; }
+        .delete-row-btn { background-color: #fd7e14; }
+        .format-btn { background-color: #dc3545; font-weight: bold; }
         
         .notification {
             position: fixed;
@@ -58,7 +62,7 @@
 </head>
 <body>
 
-    <h1>التقييم ت</h1>
+    <h1>التقييم</h1>
     
     <div class="controls">
         <input type="number" id="cWidth" placeholder="عرض العمود (px)">
@@ -68,17 +72,22 @@
         <input type="number" id="fontSize" placeholder="حجم الخط" value="14" style="width: 70px;">
         <select id="mergeType">
             <option value="none">بدون دمج</option>
-            <option value="4col">دمج 4 أعمدة فرعية</option>
+            <option value="4col">دمج 4 أعمدة</option>
         </select>
-        <button onclick="addColumn()">إضافة عمود/تخطيط جديد</button>
+        <button onclick="addColumn()">إضافة عمود</button>
         <button onclick="saveToFirebase()" class="save-btn">حفظ</button>
+        <button onclick="deleteAllData()" class="delete-all-btn">حذف كل شيء</button>
+        <button onclick="deleteColumn()" class="delete-col-btn">حذف عمود</button>
+        <button onclick="deleteRow()" class="delete-row-btn">حذف صف</button>
+        <button onclick="createBackup()" class="backup-btn">نسخه احتياطيه</button>
+        <button onclick="formatDatabase()" class="format-btn">🗑️ فرمته قاعده البيانات</button>
     </div>
 
     <div id="sheet" class="sheet">
         <table class="excel-table" id="excel-table">
             <thead>
-                <tr id="header-main"></tr>
-                <tr id="header-sub"><tr>
+                <tr id="header-main"><tr>
+                <tr id="header-sub"></td>
             </thead>
             <tbody id="table-body"></tbody>
         </table>
@@ -86,7 +95,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+        import { getDatabase, ref, set, get, remove, push } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA1l8nT513tibSwVHj7HWbLb6nCXQF8Beg",
@@ -102,7 +111,7 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         
-        let colCount = 0;
+        let colCount = 1;
 
         function showNotification(message, isError = false) {
             const notification = document.createElement('div');
@@ -111,6 +120,88 @@
             notification.style.backgroundColor = isError ? '#dc3545' : '#28a745';
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 2000);
+        }
+
+        function createNewTable() {
+            const headerMain = document.getElementById('header-main');
+            const headerSub = document.getElementById('header-sub');
+            const tableBody = document.getElementById('table-body');
+            
+            headerMain.innerHTML = '';
+            headerSub.innerHTML = '';
+            tableBody.innerHTML = '';
+            
+            colCount = 1;
+            
+            const width = document.getElementById('cWidth').value || '60';
+            const height = document.getElementById('cHeight').value || '25';
+            const bgColor = document.getElementById('bgColor').value;
+            const txtColor = document.getElementById('txtColor').value;
+            const fontSize = document.getElementById('fontSize').value;
+            
+            const th = document.createElement('th');
+            th.contentEditable = true;
+            th.innerText = 'عمود 1';
+            th.style.minWidth = width + 'px';
+            headerMain.appendChild(th);
+            
+            const subTh = document.createElement('th');
+            subTh.style.visibility = 'hidden';
+            headerSub.appendChild(subTh);
+            
+            for(let i = 0; i < 50; i++) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.contentEditable = true;
+                cell.style.height = height + 'px';
+                cell.style.backgroundColor = bgColor;
+                cell.style.color = txtColor;
+                cell.style.fontSize = fontSize + 'px';
+                row.appendChild(cell);
+                tableBody.appendChild(row);
+            }
+        }
+
+        async function formatDatabase() {
+            if (confirm('⚠️ تحذير خطير جداً! ⚠️\n\nأنت على وشك فرمته قاعدة البيانات بالكامل.\nسيتم حذف:\n- جميع البيانات الموجودة في الجدول\n- جميع النسخ الاحتياطية\n- لن تتمكن من استعادة أي شيء\n\nهل أنت متأكد تماماً؟')) {
+                
+                const confirmAgain = confirm('✅ تأكيد نهائي: اكتب "نعم" للموافقة على فرمته قاعدة البيانات');
+                
+                if (confirmAgain) {
+                    try {
+                        showNotification('⏳ جاري فرمته قاعدة البيانات...');
+                        
+                        // حذف جميع البيانات من Firebase
+                        const excelDataRef = ref(database, 'excelData');
+                        const backupsRef = ref(database, 'backups');
+                        
+                        await remove(excelDataRef);
+                        await remove(backupsRef);
+                        
+                        // حذف أي بيانات أخرى可能在 Firebase
+                        const rootRef = ref(database, '/');
+                        
+                        // إنشاء جدول جديد فارغ
+                        createNewTable();
+                        
+                        // حفظ الجدول الفارغ
+                        await saveToFirebase();
+                        
+                        showNotification('✅ تم فرمته قاعدة البيانات بالكامل بنجاح');
+                        
+                        // عرض رسالة تأكيد إضافية
+                        setTimeout(() => {
+                            showNotification('🗑️ قاعدة البيانات الآن فارغة بالكامل');
+                        }, 1500);
+                        
+                    } catch (error) {
+                        console.error('خطأ في فرمته البيانات:', error);
+                        showNotification('❌ حدث خطأ في فرمته قاعدة البيانات', true);
+                    }
+                } else {
+                    showNotification('تم إلغاء فرمته قاعدة البيانات');
+                }
+            }
         }
 
         function addColumn() {
@@ -143,234 +234,328 @@
                 }
                 
                 for (let row of tableBody.rows) {
-                    for (let i = 0; i < 4; i++) addCellToRow(row, height, bgColor, txtColor, fontSize);
+                    for (let i = 0; i < 4; i++) {
+                        const cell = document.createElement('td');
+                        cell.contentEditable = true;
+                        cell.style.height = height + 'px';
+                        cell.style.backgroundColor = bgColor;
+                        cell.style.color = txtColor;
+                        cell.style.fontSize = fontSize + 'px';
+                        row.appendChild(cell);
+                    }
                 }
                 colCount += 4;
             } else {
                 const th = document.createElement('th');
                 th.contentEditable = true;
-                th.innerText = 'عمود ' + (++colCount);
+                th.innerText = 'عمود ' + (colCount + 1);
                 th.style.minWidth = width + 'px';
                 headerMain.appendChild(th);
                 
                 const subTh = document.createElement('th');
-                subTh.style.visibility = 'hidden'; 
+                subTh.style.visibility = 'hidden';
                 headerSub.appendChild(subTh);
 
-                for (let row of tableBody.rows) addCellToRow(row, height, bgColor, txtColor, fontSize);
+                for (let row of tableBody.rows) {
+                    const cell = document.createElement('td');
+                    cell.contentEditable = true;
+                    cell.style.height = height + 'px';
+                    cell.style.backgroundColor = bgColor;
+                    cell.style.color = txtColor;
+                    cell.style.fontSize = fontSize + 'px';
+                    row.appendChild(cell);
+                }
+                colCount++;
             }
-        }
-
-        function addCellToRow(row, height, bgColor, txtColor, fontSize) {
-            const cell = document.createElement('td');
-            cell.contentEditable = true;
-            cell.style.height = height + 'px';
-            cell.style.backgroundColor = bgColor;
-            cell.style.color = txtColor;
-            cell.style.fontSize = fontSize + 'px';
-            row.appendChild(cell);
-        }
-
-        function addEmptyRow() {
-            const tableBody = document.getElementById('table-body');
-            const row = document.createElement('tr');
-            const height = document.getElementById('cHeight').value || '25';
-            const bgColor = document.getElementById('bgColor').value;
-            const txtColor = document.getElementById('txtColor').value;
-            const fontSize = document.getElementById('fontSize').value;
             
-            for(let i = 0; i < (colCount || 1); i++) {
-                addCellToRow(row, height, bgColor, txtColor, fontSize);
+            saveToFirebase();
+        }
+
+        function deleteColumn() {
+            if (colCount <= 1) {
+                showNotification('لا يمكن حذف العمود الأخير!', true);
+                return;
             }
-            tableBody.appendChild(row);
+            
+            const headerMain = document.getElementById('header-main');
+            const headerSub = document.getElementById('header-sub');
+            const tableBody = document.getElementById('table-body');
+            
+            if (headerMain.children.length > 0) {
+                const lastMainCol = headerMain.lastElementChild;
+                if (lastMainCol.colSpan && lastMainCol.colSpan > 1) {
+                    const colsToRemove = lastMainCol.colSpan;
+                    lastMainCol.remove();
+                    
+                    for (let i = 0; i < colsToRemove; i++) {
+                        if (headerSub.children.length > 0) {
+                            headerSub.lastElementChild.remove();
+                        }
+                    }
+                    
+                    for (let row of tableBody.rows) {
+                        for (let i = 0; i < colsToRemove; i++) {
+                            if (row.children.length > 0) {
+                                row.lastElementChild.remove();
+                            }
+                        }
+                    }
+                    colCount -= colsToRemove;
+                } else {
+                    lastMainCol.remove();
+                    if (headerSub.children.length > 0) {
+                        headerSub.lastElementChild.remove();
+                    }
+                    for (let row of tableBody.rows) {
+                        if (row.children.length > 0) {
+                            row.lastElementChild.remove();
+                        }
+                    }
+                    colCount--;
+                }
+            }
+            
+            saveToFirebase();
+            showNotification('تم حذف آخر عمود بنجاح');
+        }
+
+        function deleteRow() {
+            const tableBody = document.getElementById('table-body');
+            if (tableBody.rows.length <= 1) {
+                showNotification('لا يمكن حذف الصف الأخير!', true);
+                return;
+            }
+            
+            if (confirm('هل تريد حذف آخر صف؟')) {
+                tableBody.deleteRow(tableBody.rows.length - 1);
+                saveToFirebase();
+                showNotification('تم حذف آخر صف بنجاح');
+            }
+        }
+        
+        function deleteAllData() {
+            if (confirm('تحذير: هذا سيحذف جميع البيانات من الجدول. هل أنت متأكد؟')) {
+                createNewTable();
+                saveToFirebase();
+                showNotification('تم حذف كل البيانات بنجاح');
+            }
+        }
+
+        async function createBackup() {
+            try {
+                showNotification('⏳ جاري إنشاء النسخه الاحتياطيه...');
+                
+                const headersMain = [];
+                const headersSub = [];
+                const cells = [];
+                
+                document.querySelectorAll('#header-main th').forEach(th => {
+                    headersMain.push({
+                        text: th.innerText,
+                        colSpan: th.colSpan || 1,
+                        className: th.className,
+                        style: { minWidth: th.style.minWidth, backgroundColor: th.style.backgroundColor }
+                    });
+                });
+                
+                document.querySelectorAll('#header-sub th').forEach(th => {
+                    headersSub.push({
+                        text: th.innerText,
+                        visibility: th.style.visibility,
+                        minWidth: th.style.minWidth
+                    });
+                });
+                
+                document.querySelectorAll('#table-body tr').forEach(row => {
+                    const rowData = [];
+                    row.querySelectorAll('td').forEach(cell => {
+                        rowData.push({
+                            text: cell.innerText,
+                            backgroundColor: cell.style.backgroundColor,
+                            color: cell.style.color,
+                            fontSize: cell.style.fontSize,
+                            height: cell.style.height
+                        });
+                    });
+                    cells.push(rowData);
+                });
+                
+                const backupData = {
+                    version: 2,
+                    colCount: colCount,
+                    headersMain: headersMain,
+                    headersSub: headersSub,
+                    cells: cells,
+                    settings: {
+                        cWidth: document.getElementById('cWidth').value,
+                        cHeight: document.getElementById('cHeight').value,
+                        bgColor: document.getElementById('bgColor').value,
+                        txtColor: document.getElementById('txtColor').value,
+                        fontSize: document.getElementById('fontSize').value,
+                        mergeType: document.getElementById('mergeType').value
+                    },
+                    timestamp: Date.now(),
+                    backupDate: new Date().toLocaleString('ar-EG')
+                };
+                
+                const backupRef = ref(database, 'backups');
+                const newBackupRef = push(backupRef);
+                await set(newBackupRef, backupData);
+                
+                showNotification('✅ تم إنشاء النسخه الاحتياطيه بنجاح');
+            } catch (error) {
+                showNotification('حدث خطأ في إنشاء النسخه الاحتياطيه', true);
+            }
         }
 
         async function saveToFirebase() {
-            // حفظ كل شيء: رؤوس الأعمدة الرئيسية والفرعية
             const headersMain = [];
             const headersSub = [];
             const cells = [];
-            const columnWidths = [];
             
-            // حفظ الرؤوس الرئيسية مع كل التفاصيل
-            const mainThs = document.querySelectorAll('#header-main th');
-            mainThs.forEach(th => {
+            document.querySelectorAll('#header-main th').forEach(th => {
                 headersMain.push({
                     text: th.innerText,
                     colSpan: th.colSpan || 1,
                     className: th.className,
-                    style: {
-                        minWidth: th.style.minWidth,
-                        backgroundColor: th.style.backgroundColor
-                    }
+                    style: { minWidth: th.style.minWidth, backgroundColor: th.style.backgroundColor }
                 });
             });
             
-            // حفظ الرؤوس الفرعية مع عرض الأعمدة
-            const subThs = document.querySelectorAll('#header-sub th');
-            subThs.forEach(th => {
+            document.querySelectorAll('#header-sub th').forEach(th => {
                 headersSub.push({
                     text: th.innerText,
                     visibility: th.style.visibility,
-                    minWidth: th.style.minWidth,
-                    backgroundColor: th.style.backgroundColor
+                    minWidth: th.style.minWidth
                 });
-                if (th.style.minWidth) columnWidths.push(th.style.minWidth);
             });
             
-            // حفظ جميع الخلايا مع كل التفاصيل
-            const rows = document.querySelectorAll('#table-body tr');
-            rows.forEach(row => {
+            document.querySelectorAll('#table-body tr').forEach(row => {
                 const rowData = [];
-                const cellsInRow = row.querySelectorAll('td');
-                cellsInRow.forEach(cell => {
+                row.querySelectorAll('td').forEach(cell => {
                     rowData.push({
                         text: cell.innerText,
                         backgroundColor: cell.style.backgroundColor,
                         color: cell.style.color,
                         fontSize: cell.style.fontSize,
-                        height: cell.style.height,
-                        width: cell.style.width
+                        height: cell.style.height
                     });
                 });
                 cells.push(rowData);
             });
             
-            // حفظ إعدادات التحكم الحالية
-            const currentSettings = {
-                cWidth: document.getElementById('cWidth').value,
-                cHeight: document.getElementById('cHeight').value,
-                bgColor: document.getElementById('bgColor').value,
-                txtColor: document.getElementById('txtColor').value,
-                fontSize: document.getElementById('fontSize').value,
-                mergeType: document.getElementById('mergeType').value
-            };
-            
             const dataToSave = {
+                version: 2,
                 colCount: colCount,
                 headersMain: headersMain,
                 headersSub: headersSub,
                 cells: cells,
-                columnWidths: columnWidths,
-                settings: currentSettings,
+                settings: {
+                    cWidth: document.getElementById('cWidth').value,
+                    cHeight: document.getElementById('cHeight').value,
+                    bgColor: document.getElementById('bgColor').value,
+                    txtColor: document.getElementById('txtColor').value,
+                    fontSize: document.getElementById('fontSize').value,
+                    mergeType: document.getElementById('mergeType').value
+                },
                 timestamp: Date.now()
             };
             
             try {
                 await set(ref(database, 'excelData'), dataToSave);
-                showNotification(' تم حفظ كل شيء بنجاح)');
+                showNotification('تم حفظ البيانات');
             } catch (error) {
-                console.error('خطأ في الحفظ:', error);
-                showNotification(' حدث خطأ في حفظ البيانات', true);
+                showNotification('خطأ في الحفظ', true);
             }
         }
 
         async function loadFromFirebase() {
             try {
-                showNotification('⏳ جاري تحميل البيانات...');
                 const snapshot = await get(ref(database, 'excelData'));
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    colCount = data.colCount;
                     
-                    // استعادة إعدادات التحكم
-                    if (data.settings) {
-                        if (data.settings.cWidth) document.getElementById('cWidth').value = data.settings.cWidth;
-                        if (data.settings.cHeight) document.getElementById('cHeight').value = data.settings.cHeight;
-                        if (data.settings.bgColor) document.getElementById('bgColor').value = data.settings.bgColor;
-                        if (data.settings.txtColor) document.getElementById('txtColor').value = data.settings.txtColor;
-                        if (data.settings.fontSize) document.getElementById('fontSize').value = data.settings.fontSize;
-                        if (data.settings.mergeType) document.getElementById('mergeType').value = data.settings.mergeType;
-                    }
-                    
-                    // مسح الجدول الحالي
-                    const headerMain = document.getElementById('header-main');
-                    const headerSub = document.getElementById('header-sub');
-                    const tableBody = document.getElementById('table-body');
-                    
-                    headerMain.innerHTML = '';
-                    headerSub.innerHTML = '';
-                    tableBody.innerHTML = '';
-                    
-                    // إعادة بناء الرؤوس الرئيسية
-                    data.headersMain.forEach(main => {
-                        const th = document.createElement('th');
-                        th.innerText = main.text;
-                        if (main.colSpan) th.colSpan = main.colSpan;
-                        if (main.className) th.className = main.className;
-                        if (main.style) {
-                            if (main.style.minWidth) th.style.minWidth = main.style.minWidth;
-                            if (main.style.backgroundColor) th.style.backgroundColor = main.style.backgroundColor;
+                    if (data.version === 2) {
+                        colCount = data.colCount;
+                        
+                        if (data.settings) {
+                            document.getElementById('cWidth').value = data.settings.cWidth || '60';
+                            document.getElementById('cHeight').value = data.settings.cHeight || '25';
+                            document.getElementById('bgColor').value = data.settings.bgColor || '#ffffff';
+                            document.getElementById('txtColor').value = data.settings.txtColor || '#000000';
+                            document.getElementById('fontSize').value = data.settings.fontSize || '14';
+                            document.getElementById('mergeType').value = data.settings.mergeType || 'none';
                         }
-                        th.contentEditable = true;
-                        headerMain.appendChild(th);
-                    });
-                    
-                    // إعادة بناء الرؤوس الفرعية
-                    data.headersSub.forEach((sub, index) => {
-                        const th = document.createElement('th');
-                        th.innerText = sub.text;
-                        if (sub.visibility) th.style.visibility = sub.visibility;
-                        if (sub.minWidth) th.style.minWidth = sub.minWidth;
-                        if (sub.backgroundColor) th.style.backgroundColor = sub.backgroundColor;
-                        th.contentEditable = true;
-                        headerSub.appendChild(th);
-                    });
-                    
-                    // إعادة بناء الخلايا مع كل تنسيقاتها
-                    data.cells.forEach(rowData => {
-                        const row = document.createElement('tr');
-                        rowData.forEach(cellData => {
-                            const cell = document.createElement('td');
-                            cell.innerText = cellData.text;
-                            cell.contentEditable = true;
-                            if (cellData.backgroundColor) cell.style.backgroundColor = cellData.backgroundColor;
-                            if (cellData.color) cell.style.color = cellData.color;
-                            if (cellData.fontSize) cell.style.fontSize = cellData.fontSize;
-                            if (cellData.height) cell.style.height = cellData.height;
-                            if (cellData.width) cell.style.width = cellData.width;
-                            row.appendChild(cell);
+                        
+                        const headerMain = document.getElementById('header-main');
+                        const headerSub = document.getElementById('header-sub');
+                        const tableBody = document.getElementById('table-body');
+                        
+                        headerMain.innerHTML = '';
+                        headerSub.innerHTML = '';
+                        tableBody.innerHTML = '';
+                        
+                        data.headersMain.forEach(main => {
+                            const th = document.createElement('th');
+                            th.innerText = main.text;
+                            if (main.colSpan) th.colSpan = main.colSpan;
+                            if (main.className) th.className = main.className;
+                            if (main.style) {
+                                if (main.style.minWidth) th.style.minWidth = main.style.minWidth;
+                                if (main.style.backgroundColor) th.style.backgroundColor = main.style.backgroundColor;
+                            }
+                            th.contentEditable = true;
+                            headerMain.appendChild(th);
                         });
-                        tableBody.appendChild(row);
-                    });
-                    
-                    showNotification(' تم التحميل )');
+                        
+                        data.headersSub.forEach(sub => {
+                            const th = document.createElement('th');
+                            th.innerText = sub.text;
+                            if (sub.visibility) th.style.visibility = sub.visibility;
+                            if (sub.minWidth) th.style.minWidth = sub.minWidth;
+                            th.contentEditable = true;
+                            headerSub.appendChild(th);
+                        });
+                        
+                        data.cells.forEach(rowData => {
+                            const row = document.createElement('tr');
+                            rowData.forEach(cellData => {
+                                const cell = document.createElement('td');
+                                cell.innerText = cellData.text || '';
+                                cell.contentEditable = true;
+                                if (cellData.backgroundColor) cell.style.backgroundColor = cellData.backgroundColor;
+                                if (cellData.color) cell.style.color = cellData.color;
+                                if (cellData.fontSize) cell.style.fontSize = cellData.fontSize;
+                                if (cellData.height) cell.style.height = cellData.height;
+                                row.appendChild(cell);
+                            });
+                            tableBody.appendChild(row);
+                        });
+                        
+                        showNotification('تم التحميل من قاعده البيانات');
+                    } else {
+                        createNewTable();
+                    }
                 } else {
-                    showNotification(' لا توجد بيانات محفوظة. سيتم إنشاء جدول جديد.', true);
-                    // تهيئة الجدول الافتراضي
-                    colCount = 0;
-                    addColumn();
-                    for(let i = 0; i < 100; i++) addEmptyRow();
+                    createNewTable();
                 }
             } catch (error) {
-                console.error('خطأ في التحميل:', error);
-                showNotification('حدث خطأ في تحميل البيانات', true);
-                // تهيئة الجدول الافتراضي في حالة الخطأ
-                if (document.querySelectorAll('#table-body tr').length === 0) {
-                    colCount = 0;
-                    addColumn();
-                    for(let i = 0; i < 100; i++) addEmptyRow();
-                }
+                console.error('خطأ:', error);
+                createNewTable();
             }
-        }
-
-        // دالة لحفظ تلقائي كل 30 ثانية (اختياري)
-        let autoSaveInterval;
-        function startAutoSave() {
-            if (autoSaveInterval) clearInterval(autoSaveInterval);
-            autoSaveInterval = setInterval(() => {
-                saveToFirebase();
-            }, 30000);
         }
 
         window.onload = function() {
             loadFromFirebase();
-            startAutoSave();
         };
         
         window.addColumn = addColumn;
         window.saveToFirebase = saveToFirebase;
-        window.loadFromFirebase = loadFromFirebase;
+        window.deleteAllData = deleteAllData;
+        window.deleteColumn = deleteColumn;
+        window.deleteRow = deleteRow;
+        window.createBackup = createBackup;
+        window.formatDatabase = formatDatabase;
     </script>
 </body>
 </html>
