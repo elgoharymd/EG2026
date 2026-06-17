@@ -1,634 +1,1165 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>تقييم مسابقه الاطفال العلماء</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>نظام تقييم مسابقة الأطفال العلماء</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f9f9f9; }
-        h1 { text-align: center; color: #333; }
-        .controls { background: white; padding: 20px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; align-items: center; }
-        .sheet { display: flex; flex-direction: column; gap: 10px; overflow-x: auto; }
-        
-        table.excel-table { border-collapse: collapse; width: max-content; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        table.excel-table th, table.excel-table td { 
-            border: 1px solid #ccc; 
-            padding: 5px; 
-            min-width: 60px; 
-            text-align: center; 
-            resize: both; 
-            overflow: auto;
-            font-weight: bold;
-        }
-        
-        table.excel-table th { background-color: #f2f2f2; }
-        .merged-header { background-color: #d9edf7 !important; border-bottom: 2px solid #31708f !important; }
-        
-        [contenteditable] { outline: none; transition: background-color 0.2s; }
-        [contenteditable]:focus { background-color: #fff9c4; border: 1px solid #fbc02d; }
-        
-        input[type="number"], input[type="color"], select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 120px; }
-        button { padding: 10px 20px; background-color: #1900ff; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
-        button:hover { background-color: #1900ff; }
-        .save-btn { background-color: #1900ff; }
-        .delete-all-btn { background-color: #dc3545; }
-        .delete-col-btn { background-color: #ffc107; color: #000; }
-        .backup-btn { background-color: #17a2b8; }
-        .delete-database-btn { background-color: #8B0000; }
-        .delete-row-btn { background-color: #fd7e14; }
-        .format-btn { background-color: #dc3545; font-weight: bold; }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #3b28a7;
-            color: white;
-            padding: 15px 30px;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            animation: slideDown 0.3s ease-out;
-        }
-        
-        .password-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-        .password-box {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            text-align: center;
-            direction: rtl;
-        }
-        .password-box input {
-            padding: 10px;
-            font-size: 18px;
-            margin: 15px 0;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            width: 200px;
-            text-align: center;
-        }
-        .password-box button {
-            margin: 5px;
-            padding: 10px 20px;
-        }
-        
-        @keyframes slideDown {
-            from { top: -50px; opacity: 0; }
-            to { top: 20px; opacity: 1; }
-        }
-    </style>
+  :root{
+    --bg:#0f172a;
+    --bg-grad-1:#1e293b;
+    --surface:#ffffff;
+    --surface-2:#f1f5f9;
+    --border:#e2e8f0;
+    --text:#0f172a;
+    --muted:#64748b;
+    --primary:#4f46e5;
+    --primary-d:#4338ca;
+    --success:#16a34a;
+    --info:#0891b2;
+    --warning:#d97706;
+    --danger:#dc2626;
+    --danger-d:#991b1b;
+    --shadow-sm:0 1px 3px rgba(15,23,42,.08);
+    --shadow:0 8px 24px rgba(15,23,42,.12);
+    --shadow-lg:0 20px 50px rgba(15,23,42,.25);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Cairo',system-ui,'Segoe UI',Tahoma,sans-serif;
+    background:linear-gradient(135deg,#eef2ff 0%,#f8fafc 45%,#eff6ff 100%);
+    color:var(--text);
+    min-height:100vh;
+    padding:0 0 50px;
+  }
+
+  /* ===== شريط علوي ===== */
+  .topbar{
+    background:linear-gradient(120deg,var(--bg) 0%,var(--bg-grad-1) 100%);
+    color:#fff;padding:18px 26px;display:flex;align-items:center;justify-content:space-between;
+    box-shadow:var(--shadow);position:sticky;top:0;z-index:50;gap:16px;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand .logo{
+    width:46px;height:46px;border-radius:13px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--primary),#7c3aed);box-shadow:0 6px 16px rgba(79,70,229,.45);
+  }
+  .brand h1{font-size:1.3rem;font-weight:800;letter-spacing:-.3px}
+  .brand p{font-size:.8rem;color:#94a3b8;font-weight:600}
+  .topbar .right-actions{display:flex;align-items:center;gap:10px;position:relative}
+  .settings-menu{position:relative}
+  .settings-menu .btn{min-width:fit-content}
+  .actions-menu{position:relative}
+  .actions-menu .btn{min-width:fit-content}
+  .dropdown,
+  .actions-dropdown{
+    position:absolute;inset-inline-end:0;top:100%;margin-top:10px;
+    width:320px;max-width:calc(100vw - 28px);background:#fff;color:var(--text);
+    border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);
+    padding:16px;z-index:100;direction:rtl;
+  }
+  .actions-dropdown{padding:14px}
+  .dropdown.hidden,
+  .actions-dropdown.hidden{display:none}
+  .dropdown-title{font-size:.95rem;font-weight:800;color:var(--text);margin-bottom:10px}
+  .dropdown-item{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+  .dropdown-item label{font-size:.78rem;font-weight:700;color:var(--muted)}
+  .dropdown-item input{padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;font-family:inherit;font-size:.92rem;background:var(--surface-2);color:var(--text)}
+  .dropdown-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:6px}
+  .action-list{display:flex;flex-direction:column;gap:10px}
+  .action-list .btn{justify-content:flex-start}
+
+  /* صف الأزرار العلوي: زر الحفظ المستقل + قائمة الأزرار */
+  .ops-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .btn.save-main{
+    --c:var(--success);font-size:1rem;padding:13px 28px;border-radius:14px;letter-spacing:.2px;
+    box-shadow:0 8px 20px rgba(22,163,74,.35);
+  }
+  .btn.save-main .ico{width:32px;height:32px;background:rgba(255,255,255,.22)}
+  .btn.save-main:hover{box-shadow:0 12px 26px rgba(22,163,74,.45)}
+  .logout-btn{
+    display:flex;align-items:center;gap:8px;background:rgba(220,38,38,.18);border:1px solid rgba(248,113,113,.4);
+    color:#fecaca;padding:9px 16px;border-radius:999px;font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer;transition:.2s;
+  }
+  .logout-btn:hover{background:rgba(220,38,38,.32);color:#fff}
+
+  /* ===== لوحة الأدوات ===== */
+  .wrap{max-width:1400px;margin:24px auto;padding:0 18px}
+  .page-head{text-align:center;margin:8px 0 22px}
+  .page-head h1{font-size:1.5rem;font-weight:900;color:var(--text);letter-spacing:-.3px}
+  .page-head p{font-size:.92rem;color:var(--muted);font-weight:600;margin-top:6px}
+  @media(max-width:560px){ .page-head h1{font-size:1.15rem} .page-head p{font-size:.82rem} }
+  .panel{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow-sm);padding:20px;margin-bottom:22px;
+  }
+  .panel-title{display:flex;align-items:center;gap:9px;font-size:.95rem;font-weight:800;color:var(--muted);margin-bottom:16px}
+  .panel-title svg{width:18px;height:18px;color:var(--primary)}
+
+  .field-grid{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:.78rem;font-weight:700;color:var(--muted)}
+  .field input,.field select{
+    padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;
+    font-size:.92rem;font-weight:600;color:var(--text);background:var(--surface-2);transition:.18s;min-width:130px;
+  }
+  .field input:focus,.field select:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+  .field input[type=color]{padding:5px;height:42px;width:60px;min-width:60px;cursor:pointer}
+
+  /* ===== أزرار أيقونية احترافية ===== */
+  .toolbar{display:flex;flex-wrap:wrap;gap:12px}
+  .btn{
+    --c:var(--primary);
+    display:inline-flex;align-items:center;gap:9px;border:none;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:.9rem;color:#fff;
+    padding:11px 18px;border-radius:12px;transition:.18s;position:relative;
+    background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 78%,#000));
+    box-shadow:0 4px 12px color-mix(in srgb,var(--c) 35%,transparent);
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px color-mix(in srgb,var(--c) 45%,transparent);filter:brightness(1.06)}
+  .btn:active{transform:translateY(0)}
+  .btn svg{width:18px;height:18px;flex-shrink:0}
+  .btn .ico{
+    width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+    background:rgba(255,255,255,.18);margin-inline-start:-4px;
+  }
+  .btn .ico svg{width:17px;height:17px}
+  .btn.primary{--c:var(--primary)}
+  .btn.success{--c:var(--success)}
+  .btn.info{--c:var(--info)}
+  .btn.warn{--c:var(--warning);color:#3b2400}
+  .btn.warn .ico{background:rgba(0,0,0,.12)}
+  .btn.orange{--c:#ea580c}
+  .btn.danger{--c:var(--danger)}
+  .btn.darkred{--c:var(--danger-d)}
+
+  .toolbar + .toolbar{border-top:1px solid var(--border);padding-top:18px}
+
+  /* ===== الجدول (تصميم احترافي) ===== */
+  /* أرقام الصفوف بجانب الجدول من اليمين (بدون عمود أو إطار) */
+  .table-area{display:flex;align-items:flex-start;gap:6px}
+  .rownum-gutter{flex:0 0 auto;display:flex;flex-direction:column;user-select:none;padding-top:1px}
+  .rn-head{min-width:32px}
+  .rn-cell{display:grid;place-items:center;min-width:32px;box-sizing:border-box;color:#64748b;font-weight:800;font-size:.85rem}
+  .sheet{
+    flex:1 1 auto;min-width:0;overflow-x:auto;
+    border:1px solid var(--border);border-radius:16px;background:#fff;box-shadow:var(--shadow);
+  }
+  table.excel-table{border-collapse:separate;border-spacing:0;width:max-content;background:#fff}
+  table.excel-table th,table.excel-table td{
+    border-bottom:1px solid #edf0f6;border-inline-start:1px solid #edf0f6;
+    padding:10px 12px;min-width:64px;text-align:center;overflow:hidden;
+    font-weight:600;font-size:.92rem;color:#1f2937;position:relative;
+  }
+  table.excel-table th:last-child,table.excel-table td:last-child{border-inline-end:1px solid #edf0f6}
+  table.excel-table td{resize:vertical}            /* سحب الحافة السفلية لتغيير ارتفاع الصف */
+  /* مقبض سحب عرض العمود */
+  .col-resizer{
+    position:absolute;top:0;left:0;width:11px;height:100%;cursor:col-resize;
+    z-index:5;touch-action:none;user-select:none;visibility:visible;
+  }
+  .col-resizer::after{content:"";position:absolute;left:4px;top:18%;height:64%;width:3px;border-radius:3px;background:#cbd5e1;transition:.15s}
+  .col-resizer:hover::after,.col-resizer.dragging::after{background:var(--primary);width:4px}
+  .hint{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#eef2ff;border:1px solid #c7d2fe;
+    color:#3730a3;border-radius:10px;padding:11px 14px;font-size:.85rem;font-weight:600;margin-bottom:16px;
+  }
+  .hint svg{width:18px;height:18px;flex-shrink:0;color:var(--primary)}
+  .hint b{font-weight:800}
+  /* رأس ثابت احترافي يبقى مرئيًا عند التمرير */
+  table.excel-table thead th{
+    position:sticky;z-index:3;color:#fff;font-weight:800;border-bottom:none;border-inline-start-color:rgba(255,255,255,.18);
+    background:linear-gradient(180deg,#4f46e5,#4338ca);
+  }
+  table.excel-table #header-main th{top:0;z-index:4;box-shadow:0 1px 0 rgba(255,255,255,.15)}
+  table.excel-table #header-sub th{z-index:3;background:linear-gradient(180deg,#6366f1,#4f46e5)}
+  .merged-header{background:linear-gradient(135deg,#7c3aed,#6d28d9)!important;color:#fff!important;border-bottom:2px solid #c4b5fd!important}
+  /* خط فاصل واضح بين كل عمود مستقل أو مجموعة أعمدة مدمجة */
+  table.excel-table thead th.sep{border-left-width:2px;border-left-style:solid;border-left-color:rgba(255,255,255,.7)}
+  table.excel-table tbody td.sep{border-left-width:3px;border-left-style:solid;border-left-color:#64748b}
+  /* تخطيط الصفوف: تظليل متناوب + إبراز عند المرور */
+  table.excel-table tbody tr:nth-child(even) td{background:#f7f9ff}
+  table.excel-table tbody tr:hover td{background:#eaf0ff}
+  /* أول عمود (الأسماء) مميز قليلًا */
+  table.excel-table tbody td:first-child{font-weight:700;background:#fbfcff}
+  table.excel-table tbody tr:hover td:first-child{background:#eaf0ff}
+  [contenteditable]{outline:none;transition:.12s}
+  table.excel-table tbody [contenteditable]:focus{background:#fffbeb!important;box-shadow:inset 0 0 0 2px var(--warning)}
+  table.excel-table thead th:focus{background:#eef2ff!important;color:#1f2937!important}
+
+  /* ===== إشعارات ===== */
+  .notification{
+    position:fixed;top:22px;left:50%;transform:translateX(-50%);
+    color:#fff;padding:14px 28px;border-radius:12px;font-size:1rem;font-weight:700;
+    z-index:3000;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;
+    animation:slideDown .3s ease-out;
+  }
+  .notification svg{width:20px;height:20px}
+  @keyframes slideDown{from{top:-60px;opacity:0}to{top:22px;opacity:1}}
+
+  /* ===== نافذة كلمة المرور للعمليات ===== */
+  .password-modal{position:fixed;inset:0;background:rgba(15,23,42,.7);backdrop-filter:blur(4px);display:flex;justify-content:center;align-items:center;z-index:2500}
+  .password-box{background:#fff;padding:34px 30px;border-radius:18px;text-align:center;box-shadow:var(--shadow-lg);width:min(92%,380px);animation:pop .25s ease-out}
+  @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+  .password-box .lock-circle{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#7c3aed);display:grid;place-items:center;margin:0 auto 14px;box-shadow:0 8px 20px rgba(79,70,229,.4)}
+  .password-box .lock-circle svg{width:30px;height:30px;color:#fff}
+  .password-box h3{font-size:1.15rem;font-weight:800;margin-bottom:6px}
+  .password-box p{color:var(--muted);font-size:.85rem;margin-bottom:14px}
+  .password-box input{padding:12px 14px;font-size:1.1rem;border:2px solid var(--border);border-radius:10px;width:100%;text-align:center;letter-spacing:4px;font-family:inherit;transition:.18s}
+  .password-box input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.15)}
+  .pw-actions{display:flex;gap:10px;margin-top:18px}
+  .pw-actions .btn{flex:1;justify-content:center}
+  .btn.ghost{background:var(--surface-2);color:var(--muted);box-shadow:none}
+  .btn.ghost:hover{background:#e2e8f0;color:var(--text);transform:none;filter:none}
+
+  /* ===== بوابة الدخول ===== */
+  .login-gate{
+    position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 55%,#312e81 100%);
+  }
+  .login-gate::before{
+    content:"";position:absolute;inset:0;opacity:.5;
+    background:radial-gradient(40vw 40vw at 80% 10%,rgba(124,58,237,.35),transparent 60%),
+               radial-gradient(35vw 35vw at 15% 80%,rgba(37,99,235,.30),transparent 60%);
+  }
+  .login-card{
+    position:relative;background:rgba(255,255,255,.97);width:min(92%,400px);padding:40px 34px;
+    border-radius:22px;box-shadow:var(--shadow-lg);text-align:center;animation:pop .3s ease-out;
+  }
+  .login-card .lock-circle{width:78px;height:78px;margin:0 auto 18px}
+  .login-card .lock-circle svg{width:36px;height:36px}
+  .login-card h2{font-size:1.4rem;font-weight:900;margin-bottom:6px}
+  .login-card .sub{color:var(--muted);font-size:.9rem;margin-bottom:22px}
+  .pw-wrap{position:relative}
+  .pw-wrap input{
+    padding:14px 16px;font-size:1.2rem;border:2px solid var(--border);border-radius:12px;width:100%;
+    text-align:center;letter-spacing:6px;font-family:inherit;transition:.18s;
+  }
+  .pw-wrap input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(79,70,229,.15)}
+  .pw-toggle{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;display:grid;place-items:center}
+  .pw-toggle svg{width:20px;height:20px}
+  .login-btn{
+    margin-top:18px;width:100%;justify-content:center;font-size:1.05rem;padding:14px;
+  }
+  .login-error{color:var(--danger);font-weight:700;font-size:.88rem;margin-top:14px;min-height:20px}
+  .shake{animation:shake .4s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  .login-foot{margin-top:22px;font-size:.78rem;color:var(--muted)}
+
+  .hidden{display:none!important}
+
+  /* ===== الاستجابة للأجهزة اللوحية ===== */
+  @media(max-width:820px){
+    .wrap{margin:16px auto;padding:0 12px}
+    .panel{padding:16px}
+    .field input,.field select{min-width:0}
+    .field-grid{gap:10px}
+    .field{flex:1 1 140px}
+  }
+
+  /* ===== الاستجابة للهواتف ===== */
+  @media(max-width:560px){
+    .topbar{padding:12px 14px;gap:10px}
+    .brand{gap:10px}
+    .brand .logo{width:38px;height:38px;border-radius:11px}
+    .brand .logo svg{width:20px;height:20px}
+    .brand h1{font-size:.98rem;line-height:1.3}
+    .brand p{font-size:.72rem}
+    .right-actions{gap:8px}
+    .pill{display:none}                 /* إخفاء شارة الاتصال على الشاشات الصغيرة */
+    .logout-btn{padding:8px 12px;font-size:.8rem}
+
+    .wrap{margin:12px auto;padding:0 10px}
+    .panel{padding:14px;border-radius:12px;margin-bottom:16px}
+    .panel-title{font-size:.88rem;margin-bottom:12px}
+
+    /* الحقول: عمودان متساويان */
+    .field-grid{gap:10px}
+    .field{flex:1 1 calc(50% - 5px)}
+    .field input[type=color]{width:100%}
+    .field input,.field select{font-size:.95rem;padding:11px 12px}
+
+    /* الأزرار: شبكة عمودين تملأ العرض */
+    .toolbar{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn{justify-content:flex-start;font-size:.85rem;padding:12px 12px;width:100%}
+    .btn .ico{width:28px;height:28px}
+
+    /* الجدول قابل للتمرير أفقيًا مع تكبير اللمس */
+    table.excel-table th,table.excel-table td{min-width:80px;padding:10px 8px;font-size:.92rem}
+
+    /* بوابة الدخول */
+    .login-card{padding:32px 22px;border-radius:18px}
+    .login-card h2{font-size:1.2rem}
+    .login-card .lock-circle{width:66px;height:66px}
+    .notification{width:calc(100% - 28px);font-size:.9rem;padding:12px 16px;justify-content:center}
+  }
+
+  /* شاشات صغيرة جدًا: زر واحد بالعرض الكامل */
+  @media(max-width:380px){
+    .toolbar{grid-template-columns:1fr}
+    .field{flex:1 1 100%}
+  }
+</style>
 </head>
 <body>
 
-    <h1>التقييم</h1>
-    
-    <div class="controls">
-        <input type="number" id="cWidth" placeholder="عرض العمود (px)">
-        <input type="number" id="cHeight" placeholder="طول الخلية (px)">
-        <input type="color" id="bgColor" title="لون الخلفية" value="#ffffff">
-        <input type="color" id="txtColor" title="لون النص" value="#000000">
-        <input type="number" id="fontSize" placeholder="حجم الخط" value="14" style="width: 70px;">
-        <select id="mergeType">
-            <option value="none">بدون دمج</option>
-            <option value="4col">دمج 4 أعمدة</option>
-        </select>
-        <button onclick="addColumn()">إضافة عمود</button>
-        <button onclick="saveToFirebase()" class="save-btn">حفظ</button>
-        <button onclick="deleteAllData()" class="delete-all-btn">حذف كل شيء</button>
-        <button onclick="deleteColumn()" class="delete-col-btn">حذف عمود</button>
-        <button onclick="deleteRow()" class="delete-row-btn">حذف صف</button>
-        <button onclick="createBackup()" class="backup-btn">نسخه احتياطيه</button>
-        <button onclick="showPasswordModal('format')" class="format-btn">🗑️ فرمته قاعده البيانات</button>
-        <button onclick="showPasswordModal('database')" class="delete-database-btn">🔥 حذف قاعده البيانات</button>
+<!-- ============ بوابة الدخول ============ -->
+<div class="login-gate" id="loginGate">
+  <div class="login-card" id="loginCard">
+    <div class="lock-circle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h2>نظام التقييم</h2>
+    <p class="sub">مسابقة الأطفال العلماء — برجاء إدخال كلمة المرور للمتابعة</p>
+    <div class="pw-wrap">
+      <input type="password" id="loginPassword" placeholder="••••••" autocomplete="off" inputmode="numeric">
+      <button class="pw-toggle" id="loginToggle" title="إظهار/إخفاء">
+        <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <button class="btn primary login-btn" id="loginBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      دخول
+    </button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-foot">🔒 الوصول محمي — خاص بالمحكمين المصرّح لهم</div>
+  </div>
+</div>
+
+<!-- ============ التطبيق ============ -->
+<div id="app" class="hidden">
+
+  <div class="wrap">
+
+    <div class="page-head">
+      <h1>نظام تقييم مسابقة الأطفال العلماء</h1>
+      <p>الجمعية المصرية لأبحاث السرطان — تحت رعاية أ.د محمد لبيب سالم</p>
     </div>
 
-    <div id="sheet" class="sheet">
-        <table class="excel-table" id="excel-table">
+    <!-- العمليات -->
+    <section class="panel">
+      <div class="panel-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        العمليات
+      </div>
+      <p class="hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        لتغيير <b>عرض العمود</b>: اسحب الحافة الجانبية لرأس العمود. &nbsp;|&nbsp; لتغيير <b>ارتفاع الصف</b>: اسحب الحافة السفلية لأي خلية.
+      </p>
+      <div class="ops-bar">
+        <button class="btn save-main" onclick="saveToFirebase()" title="حفظ البيانات">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span>
+          حفظ البيانات
+        </button>
+        <div class="actions-menu">
+          <button class="btn primary" id="actionsToggle" aria-haspopup="true" aria-expanded="false" title="قائمة الأزرار">
+            <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg></span>
+            قائمة الأزرار
+          </button>
+          <div class="actions-dropdown hidden" id="actionsDropdown">
+            <div class="action-list">
+              <button class="btn primary" onclick="addColumn()" title="إضافة عمود جديد">إضافة عمود</button>
+              <button class="btn primary" onclick="addMergedColumn()" title="إضافة مجموعة من 4 أعمدة مدمجة">دمج 4 أعمدة</button>
+              <button class="btn info" onclick="createBackup()" title="إنشاء نسخة احتياطية">نسخة احتياطية</button>
+              <button class="btn warn" onclick="deleteColumn()" title="حذف آخر عمود">حذف عمود</button>
+              <button class="btn orange" onclick="deleteRow()" title="حذف آخر صف">حذف صف</button>
+              <button class="btn danger" onclick="deleteAllData()" title="مسح محتوى الجدول">حذف كل شيء</button>
+              <button class="btn danger" onclick="showPasswordModal('format')" title="فرمتة قاعدة البيانات بالكامل">فرمتة قاعدة البيانات</button>
+              <button class="btn darkred" onclick="showPasswordModal('database')" title="حذف قاعدة البيانات نهائيًا">حذف قاعدة البيانات</button>
+              <button class="btn ghost" id="logoutBtn" title="تسجيل الخروج">🚪 خروج</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- الجدول -->
+    <section class="panel">
+      <div class="panel-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+        جدول التقييم
+      </div>
+      <div class="table-area">
+        <div id="rownumGutter" class="rownum-gutter" aria-hidden="true"></div>
+        <div id="sheet" class="sheet">
+          <table class="excel-table" id="excel-table">
             <thead>
-                <tr id="header-main"></tr>
-                <tr id="header-sub"></tr>
+              <tr id="header-main"></tr>
+              <tr id="header-sub"></tr>
             </thead>
             <tbody id="table-body"></tbody>
-        </table>
-    </div>
+          </table>
+        </div>
+      </div>
+    </section>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getDatabase, ref, set, get, remove, push } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+  </div>
+</div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA1l8nT513tibSwVHj7HWbLb6nCXQF8Beg",
-            authDomain: "mdhh-9918e.firebaseapp.com",
-            databaseURL: "https://mdhh-9918e-default-rtdb.firebaseio.com",
-            projectId: "mdhh-9918e",
-            storageBucket: "mdhh-9918e.firebasestorage.app",
-            messagingSenderId: "657027749633",
-            appId: "1:657027749633:web:2df00b3b8e425d9834ad00",
-            measurementId: "G-L9FT9SCJF5"
-        };
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+  import { getDatabase, ref, set, get, remove, push } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        
-        let colCount = 1;
-        const PASSWORD = "246811";
+  const firebaseConfig = {
+    apiKey: "AIzaSyA1l8nT513tibSwVHj7HWbLb6nCXQF8Beg",
+    authDomain: "mdhh-9918e.firebaseapp.com",
+    databaseURL: "https://mdhh-9918e-default-rtdb.firebaseio.com",
+    projectId: "mdhh-9918e",
+    storageBucket: "mdhh-9918e.firebasestorage.app",
+    messagingSenderId: "657027749633",
+    appId: "1:657027749633:web:2df00b3b8e425d9834ad00",
+    measurementId: "G-L9FT9SCJF5"
+  };
 
-        function showNotification(message, isError = false) {
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.textContent = message;
-            notification.style.backgroundColor = isError ? '#dc3545' : '#28a745';
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 2000);
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+
+  let colCount = 1;
+  const PASSWORD = "246811";          // كلمة مرور العمليات الحساسة (فرمتة/حذف القاعدة)
+  const MENU_PASSWORD = "01102052489"; // كلمة مرور فتح قائمة الأزرار
+  // قيم افتراضية للأعمدة الجديدة (لم نعد نستخدم شريط الإعدادات)
+  const DEF = { width: '90', height: '34', bg: '#ffffff', txt: '#000000', font: '15' };
+
+  function applyDefaultsToTable() {
+    const width = DEF.width + 'px';
+    const height = DEF.height + 'px';
+    document.querySelectorAll('#header-sub th').forEach(th => {
+      th.style.minWidth = width;
+      th.style.width = width;
+    });
+    document.querySelectorAll('#table-body tr').forEach(row => {
+      Array.from(row.cells).forEach(cell => {
+        cell.style.minWidth = width;
+        cell.style.width = width;
+        cell.style.height = height;
+        cell.style.backgroundColor = DEF.bg;
+        cell.style.color = DEF.txt;
+        cell.style.fontSize = DEF.font + 'px';
+      });
+    });
+  }
+
+  function initSettingsDropdown() {
+    const toggle = document.getElementById('settingsToggle');
+    const dropdown = document.getElementById('settingsDropdown');
+    const widthInput = document.getElementById('defaultWidth');
+    const heightInput = document.getElementById('defaultHeight');
+    const bgInput = document.getElementById('defaultBgColor');
+    const txtInput = document.getElementById('defaultTxtColor');
+    const fontInput = document.getElementById('defaultFontSize');
+    const applyBtn = document.getElementById('applySettingsBtn');
+    const resetBtn = document.getElementById('resetSettingsBtn');
+
+    const closeDropdown = () => {
+      dropdown.classList.add('hidden');
+      toggle.setAttribute('aria-expanded', 'false');
+    };
+    const openDropdown = () => {
+      dropdown.classList.remove('hidden');
+      toggle.setAttribute('aria-expanded', 'true');
+    };
+    const toggleDropdown = () => {
+      dropdown.classList.toggle('hidden');
+      toggle.setAttribute('aria-expanded', dropdown.classList.contains('hidden') ? 'false' : 'true');
+    };
+    const populateInputs = () => {
+      widthInput.value = DEF.width;
+      heightInput.value = DEF.height;
+      bgInput.value = DEF.bg;
+      txtInput.value = DEF.txt;
+      fontInput.value = DEF.font;
+    };
+    const applySettings = () => {
+      DEF.width = String(Math.max(40, Math.min(300, Number(widthInput.value) || 90)));
+      DEF.height = String(Math.max(24, Math.min(200, Number(heightInput.value) || 34)));
+      DEF.bg = bgInput.value || DEF.bg;
+      DEF.txt = txtInput.value || DEF.txt;
+      DEF.font = String(Math.max(10, Math.min(26, Number(fontInput.value) || 15)));
+      applyDefaultsToTable();
+      showNotification('تم تطبيق إعدادات القائمة');
+    };
+    const resetSettings = () => {
+      DEF.width = '90';
+      DEF.height = '34';
+      DEF.bg = '#ffffff';
+      DEF.txt = '#000000';
+      DEF.font = '15';
+      populateInputs();
+      applyDefaultsToTable();
+      showNotification('تم إعادة تعيين الإعدادات');
+    };
+
+    toggle.addEventListener('click', e => { e.stopPropagation(); toggleDropdown(); });
+    applyBtn.addEventListener('click', e => { e.stopPropagation(); applySettings(); });
+    resetBtn.addEventListener('click', e => { e.stopPropagation(); resetSettings(); });
+    document.addEventListener('click', e => {
+      if (!dropdown.contains(e.target) && e.target !== toggle) closeDropdown();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeDropdown();
+    });
+    populateInputs();
+  }
+
+  function initActionsDropdown() {
+    const toggle = document.getElementById('actionsToggle');
+    const dropdown = document.getElementById('actionsDropdown');
+    if (!toggle || !dropdown) return;
+
+    const closeDropdown = () => {
+      dropdown.classList.add('hidden');
+      toggle.setAttribute('aria-expanded', 'false');
+    };
+    const openDropdown = () => {
+      dropdown.classList.remove('hidden');
+      toggle.setAttribute('aria-expanded', 'true');
+    };
+    const toggleDropdown = (event) => {
+      event.stopPropagation();
+      if (dropdown.classList.contains('hidden')) {
+        // فتح القائمة يتطلب كلمة المرور
+        promptPassword(MENU_PASSWORD, openDropdown, {
+          title: 'فتح قائمة الأزرار',
+          desc: 'هذه القائمة محمية، أدخل كلمة المرور للمتابعة'
+        });
+      } else {
+        closeDropdown();
+      }
+    };
+
+    toggle.addEventListener('click', toggleDropdown);
+    document.addEventListener('click', event => {
+      if (!dropdown.contains(event.target) && event.target !== toggle) closeDropdown();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeDropdown();
+    });
+    Array.from(dropdown.querySelectorAll('button')).forEach(btn => {
+      btn.addEventListener('click', () => {
+        closeDropdown();
+      });
+    });
+  }
+
+  /* ===== أيقونات الإشعارات ===== */
+  const ICON_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  const ICON_ERR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+
+  function showNotification(message, isError = false) {
+    const n = document.createElement('div');
+    n.className = 'notification';
+    n.innerHTML = (isError ? ICON_ERR : ICON_OK) + '<span></span>';
+    n.querySelector('span').textContent = message;
+    n.style.backgroundColor = isError ? '#dc2626' : '#16a34a';
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), 2200);
+  }
+
+  /* ===== نافذة كلمة مرور عامة قابلة لإعادة الاستخدام ===== */
+  function promptPassword(expected, onSuccess, opts) {
+    opts = opts || {};
+    const modal = document.createElement('div');
+    modal.className = 'password-modal';
+    modal.innerHTML = `
+      <div class="password-box">
+        <div class="lock-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <h3>${opts.title || 'كلمة المرور'}</h3>
+        <p>${opts.desc || 'أدخل كلمة المرور للمتابعة'}</p>
+        <input type="password" id="ppInput" placeholder="••••••" autocomplete="off" inputmode="numeric">
+        <div class="pw-actions">
+          <button class="btn ghost" id="ppCancel">إلغاء</button>
+          <button class="btn primary" id="ppOk">تأكيد</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    const input = modal.querySelector('#ppInput');
+    const okBtn = modal.querySelector('#ppOk');
+    const cancelBtn = modal.querySelector('#ppCancel');
+    const check = () => {
+      if (input.value === expected) { modal.remove(); onSuccess(); }
+      else { showNotification('كلمة المرور خاطئة!', true); input.value = ''; input.focus(); }
+    };
+    okBtn.onclick = (e) => { e.stopPropagation(); check(); };
+    cancelBtn.onclick = (e) => { e.stopPropagation(); modal.remove(); };
+    input.onkeypress = (e) => { if (e.key === 'Enter') { e.stopPropagation(); check(); } };
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    input.focus();
+  }
+
+  /* ===== نافذة كلمة المرور للعمليات الحساسة ===== */
+  function showPasswordModal(action) {
+    const modal = document.createElement('div');
+    modal.className = 'password-modal';
+    modal.innerHTML = `
+      <div class="password-box">
+        <div class="lock-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <h3>تأكيد الهوية</h3>
+        <p>هذه عملية حساسة، أدخل كلمة المرور للمتابعة</p>
+        <input type="password" id="passwordInput" placeholder="••••••" autocomplete="off" inputmode="numeric">
+        <div class="pw-actions">
+          <button class="btn ghost" id="cancelPwBtn">إلغاء</button>
+          <button class="btn danger" id="confirmPasswordBtn">تأكيد</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+
+    const input = modal.querySelector('#passwordInput');
+    const confirmBtn = modal.querySelector('#confirmPasswordBtn');
+    const cancelBtn = modal.querySelector('#cancelPwBtn');
+
+    const checkPassword = () => {
+      if (input.value === PASSWORD) {
+        modal.remove();
+        if (action === 'format') formatDatabase();
+        else if (action === 'database') deleteDatabase();
+      } else {
+        showNotification('كلمة المرور خاطئة!', true);
+        input.value = '';
+        input.focus();
+      }
+    };
+    confirmBtn.onclick = checkPassword;
+    cancelBtn.onclick = () => modal.remove();
+    input.onkeypress = (e) => { if (e.key === 'Enter') checkPassword(); };
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    input.focus();
+  }
+
+  function createNewTable() {
+    const headerMain = document.getElementById('header-main');
+    const headerSub = document.getElementById('header-sub');
+    const tableBody = document.getElementById('table-body');
+    headerMain.innerHTML = '';
+    headerSub.innerHTML = '';
+    tableBody.innerHTML = '';
+    colCount = 1;
+
+    const width = DEF.width, height = DEF.height, bgColor = DEF.bg, txtColor = DEF.txt, fontSize = DEF.font;
+
+    const th = document.createElement('th');
+    th.contentEditable = true;
+    th.innerText = 'عمود 1';
+    th.style.minWidth = width + 'px';
+    headerMain.appendChild(th);
+
+    const subTh = document.createElement('th');
+    subTh.style.visibility = 'hidden';
+    subTh.style.minWidth = width + 'px';
+    headerSub.appendChild(subTh);
+
+    for (let i = 0; i < 50; i++) {
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.contentEditable = true;
+      cell.style.height = height + 'px';
+      cell.style.minWidth = width + 'px';
+      cell.style.backgroundColor = bgColor;
+      cell.style.color = txtColor;
+      cell.style.fontSize = fontSize + 'px';
+      row.appendChild(cell);
+      tableBody.appendChild(row);
+    }
+    makeResizable();
+    syncStickyHeader();
+    markColumnGroups();
+    buildRowNumbers();
+  }
+
+  async function formatDatabase() {
+    try {
+      showNotification('جاري فرمتة قاعدة البيانات...');
+      await remove(ref(database, 'excelData'));
+      await remove(ref(database, 'backups'));
+      createNewTable();
+      await saveToFirebase();
+      showNotification('تم فرمتة قاعدة البيانات بالكامل بنجاح');
+    } catch (error) {
+      console.error('خطأ:', error);
+      showNotification('حدث خطأ', true);
+    }
+  }
+
+  async function deleteDatabase() {
+    try {
+      showNotification('جاري حذف قاعدة البيانات...');
+      await remove(ref(database, 'excelData'));
+      await remove(ref(database, 'backups'));
+      createNewTable();
+      showNotification('تم حذف قاعدة البيانات بالكامل بنجاح');
+    } catch (error) {
+      console.error('خطأ:', error);
+      showNotification('حدث خطأ', true);
+    }
+  }
+
+  function addMergedColumn() { addColumn('4col'); }
+
+  function addColumn(mergeType = 'none') {
+    const width = DEF.width, height = DEF.height, bgColor = DEF.bg, txtColor = DEF.txt, fontSize = DEF.font;
+
+    const headerMain = document.getElementById('header-main');
+    const headerSub = document.getElementById('header-sub');
+    const tableBody = document.getElementById('table-body');
+
+    if (mergeType === '4col') {
+      const mainTh = document.createElement('th');
+      mainTh.className = 'merged-header';
+      mainTh.colSpan = 4;
+      mainTh.innerText = 'الفكرة';
+      mainTh.contentEditable = true;
+      headerMain.appendChild(mainTh);
+
+      for (let i = 1; i <= 4; i++) {
+        const subTh = document.createElement('th');
+        subTh.contentEditable = true;
+        subTh.innerText = 'محكم ' + (colCount + i);
+        subTh.style.minWidth = width + 'px';
+        headerSub.appendChild(subTh);
+      }
+      for (let row of tableBody.rows) {
+        for (let i = 0; i < 4; i++) {
+          const cell = document.createElement('td');
+          cell.contentEditable = true;
+          cell.style.height = height + 'px';
+          cell.style.minWidth = width + 'px';
+          cell.style.backgroundColor = bgColor;
+          cell.style.color = txtColor;
+          cell.style.fontSize = fontSize + 'px';
+          row.appendChild(cell);
         }
+      }
+      colCount += 4;
+    } else {
+      const th = document.createElement('th');
+      th.contentEditable = true;
+      th.innerText = 'عمود ' + (colCount + 1);
+      th.style.minWidth = width + 'px';
+      headerMain.appendChild(th);
 
-        function showPasswordModal(action) {
-            const modal = document.createElement('div');
-            modal.className = 'password-modal';
-            modal.innerHTML = `
-                <div class="password-box">
-                    <h3>🔐 ادخل كلمه المرور</h3>
-                    <input type="password" id="passwordInput" placeholder="********" autocomplete="off">
-                    <br>
-                    <button onclick="this.closest('.password-modal').remove()">إلغاء</button>
-                    <button id="confirmPasswordBtn">تأكيد</button>
-                </div>
-            `;
-            document.body.appendChild(modal);
-            
-            const input = modal.querySelector('#passwordInput');
-            const confirmBtn = modal.querySelector('#confirmPasswordBtn');
-            
-            const checkPassword = () => {
-                if (input.value === PASSWORD) {
-                    modal.remove();
-                    if (action === 'format') {
-                        formatDatabase();
-                    } else if (action === 'database') {
-                        deleteDatabase();
-                    }
-                } else {
-                    showNotification('❌ كلمه المرور خاطئه!', true);
-                    input.value = '';
-                    input.focus();
-                }
-            };
-            
-            confirmBtn.onclick = checkPassword;
-            input.onkeypress = (e) => {
-                if (e.key === 'Enter') checkPassword();
-            };
-            input.focus();
+      const subTh = document.createElement('th');
+      subTh.style.visibility = 'hidden';
+      subTh.style.minWidth = width + 'px';
+      headerSub.appendChild(subTh);
+
+      for (let row of tableBody.rows) {
+        const cell = document.createElement('td');
+        cell.contentEditable = true;
+        cell.style.height = height + 'px';
+        cell.style.minWidth = width + 'px';
+        cell.style.backgroundColor = bgColor;
+        cell.style.color = txtColor;
+        cell.style.fontSize = fontSize + 'px';
+        row.appendChild(cell);
+      }
+      colCount++;
+    }
+    makeResizable();
+    syncStickyHeader();
+    markColumnGroups();
+    buildRowNumbers();
+    saveToFirebase();
+  }
+
+  function deleteColumn() {
+    if (colCount <= 1) {
+      showNotification('لا يمكن حذف العمود الأخير!', true);
+      return;
+    }
+    const headerMain = document.getElementById('header-main');
+    const headerSub = document.getElementById('header-sub');
+    const tableBody = document.getElementById('table-body');
+
+    if (headerMain.children.length > 0) {
+      const lastMainCol = headerMain.lastElementChild;
+      if (lastMainCol.colSpan && lastMainCol.colSpan > 1) {
+        const colsToRemove = lastMainCol.colSpan;
+        lastMainCol.remove();
+        for (let i = 0; i < colsToRemove; i++) {
+          if (headerSub.children.length > 0) headerSub.lastElementChild.remove();
         }
+        for (let row of tableBody.rows) {
+          for (let i = 0; i < colsToRemove; i++) {
+            if (row.children.length > 0) row.lastElementChild.remove();
+          }
+        }
+        colCount -= colsToRemove;
+      } else {
+        lastMainCol.remove();
+        if (headerSub.children.length > 0) headerSub.lastElementChild.remove();
+        for (let row of tableBody.rows) {
+          if (row.children.length > 0) row.lastElementChild.remove();
+        }
+        colCount--;
+      }
+    }
+    markColumnGroups();
+    buildRowNumbers();
+    saveToFirebase();
+    showNotification('تم حذف آخر عمود بنجاح');
+  }
 
-        function createNewTable() {
-            const headerMain = document.getElementById('header-main');
-            const headerSub = document.getElementById('header-sub');
-            const tableBody = document.getElementById('table-body');
-            
-            headerMain.innerHTML = '';
-            headerSub.innerHTML = '';
-            tableBody.innerHTML = '';
-            
-            colCount = 1;
-            
-            const width = document.getElementById('cWidth').value || '60';
-            const height = document.getElementById('cHeight').value || '25';
-            const bgColor = document.getElementById('bgColor').value;
-            const txtColor = document.getElementById('txtColor').value;
-            const fontSize = document.getElementById('fontSize').value;
-            
+  function deleteRow() {
+    const tableBody = document.getElementById('table-body');
+    if (tableBody.rows.length <= 1) {
+      showNotification('لا يمكن حذف الصف الأخير!', true);
+      return;
+    }
+    if (confirm('هل تريد حذف آخر صف؟')) {
+      tableBody.deleteRow(tableBody.rows.length - 1);
+      buildRowNumbers();
+      saveToFirebase();
+      showNotification('تم حذف آخر صف بنجاح');
+    }
+  }
+
+  function deleteAllData() {
+    if (confirm('تحذير: هذا سيحذف جميع البيانات من الجدول. هل أنت متأكد؟')) {
+      createNewTable();
+      saveToFirebase();
+      showNotification('تم حذف كل البيانات بنجاح');
+    }
+  }
+
+  function collectTableData() {
+    const headersMain = [];
+    const headersSub = [];
+    const cells = [];
+    document.querySelectorAll('#header-main th').forEach(th => {
+      headersMain.push({
+        text: th.innerText,
+        colSpan: th.colSpan || 1,
+        className: th.className,
+        style: { minWidth: th.style.minWidth, backgroundColor: th.style.backgroundColor }
+      });
+    });
+    document.querySelectorAll('#header-sub th').forEach(th => {
+      headersSub.push({ text: th.innerText, visibility: th.style.visibility, minWidth: th.style.minWidth });
+    });
+    document.querySelectorAll('#table-body tr').forEach(row => {
+      const rowData = [];
+      row.querySelectorAll('td').forEach(cell => {
+        rowData.push({
+          text: cell.innerText,
+          backgroundColor: cell.style.backgroundColor,
+          color: cell.style.color,
+          fontSize: cell.style.fontSize,
+          height: cell.style.height
+        });
+      });
+      cells.push(rowData);
+    });
+    return { headersMain, headersSub, cells };
+  }
+
+  function currentSettings() {
+    return { cWidth: DEF.width, cHeight: DEF.height, bgColor: DEF.bg, txtColor: DEF.txt, fontSize: DEF.font, mergeType: 'none' };
+  }
+
+  /* ===== سحب لتغيير عرض الأعمدة + استرجاع/تطبيق العروض ===== */
+  function getColWidths() {
+    const firstRow = document.querySelector('#table-body tr');
+    if (!firstRow) return [];
+    return Array.from(firstRow.cells).map(c => Math.round(c.getBoundingClientRect().width));
+  }
+
+  function applyColWidths(widths) {
+    if (!Array.isArray(widths)) return;
+    const subThs = document.querySelectorAll('#header-sub th');
+    const rows = document.querySelectorAll('#table-body tr');
+    widths.forEach((w, i) => {
+      if (!w) return;
+      const px = w + 'px';
+      if (subThs[i]) { subThs[i].style.minWidth = px; subThs[i].style.width = px; }
+      rows.forEach(r => { if (r.cells[i]) { r.cells[i].style.minWidth = px; r.cells[i].style.width = px; } });
+    });
+  }
+
+  function makeResizable() {
+    document.querySelectorAll('#header-sub th').forEach((th, i) => {
+      if (th.querySelector('.col-resizer')) return;       // تفادي التكرار
+      const handle = document.createElement('div');
+      handle.className = 'col-resizer';
+      handle.title = 'اسحب لتغيير عرض العمود';
+      th.appendChild(handle);
+
+      let startX = 0, startW = 0;
+      const px = (e) => (e.touches ? e.touches[0].clientX : e.clientX);
+      const colWidth = () => {
+        const fr = document.querySelector('#table-body tr');
+        return (fr && fr.cells[i]) ? fr.cells[i].getBoundingClientRect().width : th.getBoundingClientRect().width;
+      };
+      const setW = (w) => {
+        w = Math.max(40, Math.min(900, Math.round(w)));
+        const v = w + 'px';
+        th.style.minWidth = v; th.style.width = v;
+        document.querySelectorAll('#table-body tr').forEach(r => {
+          if (r.cells[i]) { r.cells[i].style.minWidth = v; r.cells[i].style.width = v; }
+        });
+      };
+      const onMove = (e) => { e.preventDefault(); setW(startW + (startX - px(e))); };
+      const onUp = () => {
+        handle.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onUp);
+        document.body.style.cursor = '';
+        saveToFirebase();
+      };
+      const onDown = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        handle.classList.add('dragging');
+        startX = px(e); startW = colWidth();
+        document.body.style.cursor = 'col-resize';
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onUp);
+      };
+      handle.addEventListener('mousedown', onDown);
+      handle.addEventListener('touchstart', onDown, { passive: false });
+    });
+  }
+
+  // خط فاصل بين كل عمود مستقل وكل مجموعة أعمدة مدمجة
+  // يُرسم على الحافة اليسرى لآخر خلية في كل وحدة (حدّ الفصل عن الوحدة التالية)
+  function markColumnGroups() {
+    document.querySelectorAll('.sep').forEach(el => el.classList.remove('sep'));
+    const mains = Array.from(document.querySelectorAll('#header-main th'));
+    const subThs = document.querySelectorAll('#header-sub th');
+    const rows = document.querySelectorAll('#table-body tr');
+    let idx = 0;
+    mains.forEach((main, mi) => {
+      const span = main.colSpan || 1;
+      const last = idx + span - 1;
+      if (mi < mains.length - 1) {                  // كل الوحدات عدا الأخيرة
+        main.classList.add('sep');
+        if (subThs[last]) subThs[last].classList.add('sep');
+        rows.forEach(r => { if (r.cells[last]) r.cells[last].classList.add('sep'); });
+      }
+      idx += span;
+    });
+  }
+
+  // بناء أرقام الصفوف بجانب الجدول (من اليمين) مع محاذاة ارتفاع كل صف
+  let _rowNumRO = null;
+  function buildRowNumbers() {
+    const gutter = document.getElementById('rownumGutter');
+    if (!gutter) return;
+    const thead = document.querySelector('#excel-table thead');
+    const rows = document.querySelectorAll('#table-body tr');
+    gutter.innerHTML = '';
+    const head = document.createElement('div');
+    head.className = 'rn-head';
+    gutter.appendChild(head);
+    rows.forEach((r, i) => {
+      const c = document.createElement('div');
+      c.className = 'rn-cell';
+      c.textContent = i + 1;
+      gutter.appendChild(c);
+    });
+    syncRowNumHeights();
+    // إعادة المحاذاة تلقائيًا عند تغيّر ارتفاع أي صف (تعديل/سحب)
+    if (!_rowNumRO && window.ResizeObserver) {
+      _rowNumRO = new ResizeObserver(() => syncRowNumHeights());
+      const tbl = document.getElementById('excel-table');
+      if (tbl) _rowNumRO.observe(tbl);
+    }
+  }
+
+  function syncRowNumHeights() {
+    const gutter = document.getElementById('rownumGutter');
+    if (!gutter) return;
+    const thead = document.querySelector('#excel-table thead');
+    const rows = document.querySelectorAll('#table-body tr');
+    const head = gutter.querySelector('.rn-head');
+    if (head && thead) head.style.height = thead.getBoundingClientRect().height + 'px';
+    const cells = gutter.querySelectorAll('.rn-cell');
+    rows.forEach((r, i) => { if (cells[i]) cells[i].style.height = r.getBoundingClientRect().height + 'px'; });
+  }
+  window.addEventListener('resize', syncRowNumHeights);
+
+  // مزامنة موضع الصف الثاني من الرأس الثابت أسفل الصف الأول مباشرةً
+  function syncStickyHeader() {
+    const main = document.getElementById('header-main');
+    if (!main) return;
+    const h = Math.round(main.getBoundingClientRect().height);
+    document.querySelectorAll('#header-sub th').forEach(th => { th.style.top = h + 'px'; });
+  }
+  window.addEventListener('resize', syncStickyHeader);
+
+  async function createBackup() {
+    try {
+      showNotification('جاري إنشاء النسخة الاحتياطية...');
+      const { headersMain, headersSub, cells } = collectTableData();
+      const backupData = {
+        version: 2, colCount, headersMain, headersSub, cells,
+        colWidths: getColWidths(),
+        settings: currentSettings(),
+        timestamp: Date.now(),
+        backupDate: new Date().toLocaleString('ar-EG')
+      };
+      const newBackupRef = push(ref(database, 'backups'));
+      await set(newBackupRef, backupData);
+      showNotification('تم إنشاء النسخة الاحتياطية بنجاح');
+    } catch (error) {
+      showNotification('حدث خطأ في إنشاء النسخة الاحتياطية', true);
+    }
+  }
+
+  async function saveToFirebase() {
+    const { headersMain, headersSub, cells } = collectTableData();
+    const dataToSave = {
+      version: 2, colCount, headersMain, headersSub, cells,
+      colWidths: getColWidths(),
+      settings: currentSettings(),
+      timestamp: Date.now()
+    };
+    try {
+      await set(ref(database, 'excelData'), dataToSave);
+      showNotification('تم حفظ البيانات');
+    } catch (error) {
+      showNotification('خطأ في الحفظ', true);
+    }
+  }
+
+  async function loadFromFirebase() {
+    try {
+      const snapshot = await get(ref(database, 'excelData'));
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        if (data.version === 2) {
+          colCount = data.colCount;
+          const headerMain = document.getElementById('header-main');
+          const headerSub = document.getElementById('header-sub');
+          const tableBody = document.getElementById('table-body');
+          headerMain.innerHTML = '';
+          headerSub.innerHTML = '';
+          tableBody.innerHTML = '';
+
+          data.headersMain.forEach(main => {
             const th = document.createElement('th');
+            th.innerText = main.text;
+            if (main.colSpan) th.colSpan = main.colSpan;
+            if (main.className) th.className = main.className;
+            if (main.style) {
+              if (main.style.minWidth) th.style.minWidth = main.style.minWidth;
+              if (main.style.backgroundColor) th.style.backgroundColor = main.style.backgroundColor;
+            }
             th.contentEditable = true;
-            th.innerText = 'عمود 1';
-            th.style.minWidth = width + 'px';
             headerMain.appendChild(th);
-            
-            const subTh = document.createElement('th');
-            subTh.style.visibility = 'hidden';
-            headerSub.appendChild(subTh);
-            
-            for(let i = 0; i < 50; i++) {
-                const row = document.createElement('tr');
-                const cell = document.createElement('td');
-                cell.contentEditable = true;
-                cell.style.height = height + 'px';
-                cell.style.backgroundColor = bgColor;
-                cell.style.color = txtColor;
-                cell.style.fontSize = fontSize + 'px';
-                row.appendChild(cell);
-                tableBody.appendChild(row);
-            }
-        }
-
-        async function formatDatabase() {
-            try {
-                showNotification('⏳ جاري فرمته قاعدة البيانات...');
-                
-                const excelDataRef = ref(database, 'excelData');
-                const backupsRef = ref(database, 'backups');
-                
-                await remove(excelDataRef);
-                await remove(backupsRef);
-                
-                createNewTable();
-                await saveToFirebase();
-                
-                showNotification('✅ تم فرمته قاعده البيانات بالكامل بنجاح');
-            } catch (error) {
-                console.error('خطأ:', error);
-                showNotification('❌ حدث خطأ', true);
-            }
-        }
-
-        async function deleteDatabase() {
-            try {
-                showNotification('⏳ جاري حذف قاعده البيانات...');
-                
-                const excelDataRef = ref(database, 'excelData');
-                const backupsRef = ref(database, 'backups');
-                
-                await remove(excelDataRef);
-                await remove(backupsRef);
-                
-                createNewTable();
-                
-                showNotification('✅ تم حذف قاعده البيانات بالكامل بنجاح');
-            } catch (error) {
-                console.error('خطأ:', error);
-                showNotification('❌ حدث خطأ', true);
-            }
-        }
-
-        function addColumn() {
-            const width = document.getElementById('cWidth').value || '60';
-            const height = document.getElementById('cHeight').value || '25';
-            const bgColor = document.getElementById('bgColor').value;
-            const txtColor = document.getElementById('txtColor').value;
-            const fontSize = document.getElementById('fontSize').value;
-            const mergeType = document.getElementById('mergeType').value;
-
-            const headerMain = document.getElementById('header-main');
-            const headerSub = document.getElementById('header-sub');
-            const tableBody = document.getElementById('table-body');
-
-            if (mergeType === '4col') {
-                const mainTh = document.createElement('th');
-                mainTh.className = 'merged-header';
-                mainTh.colSpan = 4;
-                mainTh.innerText = 'الفكرة';
-                mainTh.contentEditable = true;
-                headerMain.appendChild(mainTh);
-
-                for (let i = 1; i <= 4; i++) {
-                    const subTh = document.createElement('th');
-                    subTh.contentEditable = true;
-                    subTh.innerText = 'محكم ' + (colCount + i);
-                    subTh.style.minWidth = width + 'px';
-                    subTh.style.backgroundColor = '#f2f2f2';
-                    headerSub.appendChild(subTh);
-                }
-                
-                for (let row of tableBody.rows) {
-                    for (let i = 0; i < 4; i++) {
-                        const cell = document.createElement('td');
-                        cell.contentEditable = true;
-                        cell.style.height = height + 'px';
-                        cell.style.backgroundColor = bgColor;
-                        cell.style.color = txtColor;
-                        cell.style.fontSize = fontSize + 'px';
-                        row.appendChild(cell);
-                    }
-                }
-                colCount += 4;
-            } else {
-                const th = document.createElement('th');
-                th.contentEditable = true;
-                th.innerText = 'عمود ' + (colCount + 1);
-                th.style.minWidth = width + 'px';
-                headerMain.appendChild(th);
-                
-                const subTh = document.createElement('th');
-                subTh.style.visibility = 'hidden';
-                headerSub.appendChild(subTh);
-
-                for (let row of tableBody.rows) {
-                    const cell = document.createElement('td');
-                    cell.contentEditable = true;
-                    cell.style.height = height + 'px';
-                    cell.style.backgroundColor = bgColor;
-                    cell.style.color = txtColor;
-                    cell.style.fontSize = fontSize + 'px';
-                    row.appendChild(cell);
-                }
-                colCount++;
-            }
-            
-            saveToFirebase();
-        }
-
-        function deleteColumn() {
-            if (colCount <= 1) {
-                showNotification('لا يمكن حذف العمود الأخير!', true);
-                return;
-            }
-            
-            const headerMain = document.getElementById('header-main');
-            const headerSub = document.getElementById('header-sub');
-            const tableBody = document.getElementById('table-body');
-            
-            if (headerMain.children.length > 0) {
-                const lastMainCol = headerMain.lastElementChild;
-                if (lastMainCol.colSpan && lastMainCol.colSpan > 1) {
-                    const colsToRemove = lastMainCol.colSpan;
-                    lastMainCol.remove();
-                    
-                    for (let i = 0; i < colsToRemove; i++) {
-                        if (headerSub.children.length > 0) {
-                            headerSub.lastElementChild.remove();
-                        }
-                    }
-                    
-                    for (let row of tableBody.rows) {
-                        for (let i = 0; i < colsToRemove; i++) {
-                            if (row.children.length > 0) {
-                                row.lastElementChild.remove();
-                            }
-                        }
-                    }
-                    colCount -= colsToRemove;
-                } else {
-                    lastMainCol.remove();
-                    if (headerSub.children.length > 0) {
-                        headerSub.lastElementChild.remove();
-                    }
-                    for (let row of tableBody.rows) {
-                        if (row.children.length > 0) {
-                            row.lastElementChild.remove();
-                        }
-                    }
-                    colCount--;
-                }
-            }
-            
-            saveToFirebase();
-            showNotification('تم حذف آخر عمود بنجاح');
-        }
-
-        function deleteRow() {
-            const tableBody = document.getElementById('table-body');
-            if (tableBody.rows.length <= 1) {
-                showNotification('لا يمكن حذف الصف الأخير!', true);
-                return;
-            }
-            
-            if (confirm('هل تريد حذف آخر صف؟')) {
-                tableBody.deleteRow(tableBody.rows.length - 1);
-                saveToFirebase();
-                showNotification('تم حذف آخر صف بنجاح');
-            }
-        }
-        
-        function deleteAllData() {
-            if (confirm('تحذير: هذا سيحذف جميع البيانات من الجدول. هل أنت متأكد؟')) {
-                createNewTable();
-                saveToFirebase();
-                showNotification('تم حذف كل البيانات بنجاح');
-            }
-        }
-
-        async function createBackup() {
-            try {
-                showNotification('⏳ جاري إنشاء النسخه الاحتياطيه...');
-                
-                const headersMain = [];
-                const headersSub = [];
-                const cells = [];
-                
-                document.querySelectorAll('#header-main th').forEach(th => {
-                    headersMain.push({
-                        text: th.innerText,
-                        colSpan: th.colSpan || 1,
-                        className: th.className,
-                        style: { minWidth: th.style.minWidth, backgroundColor: th.style.backgroundColor }
-                    });
-                });
-                
-                document.querySelectorAll('#header-sub th').forEach(th => {
-                    headersSub.push({
-                        text: th.innerText,
-                        visibility: th.style.visibility,
-                        minWidth: th.style.minWidth
-                    });
-                });
-                
-                document.querySelectorAll('#table-body tr').forEach(row => {
-                    const rowData = [];
-                    row.querySelectorAll('td').forEach(cell => {
-                        rowData.push({
-                            text: cell.innerText,
-                            backgroundColor: cell.style.backgroundColor,
-                            color: cell.style.color,
-                            fontSize: cell.style.fontSize,
-                            height: cell.style.height
-                        });
-                    });
-                    cells.push(rowData);
-                });
-                
-                const backupData = {
-                    version: 2,
-                    colCount: colCount,
-                    headersMain: headersMain,
-                    headersSub: headersSub,
-                    cells: cells,
-                    settings: {
-                        cWidth: document.getElementById('cWidth').value,
-                        cHeight: document.getElementById('cHeight').value,
-                        bgColor: document.getElementById('bgColor').value,
-                        txtColor: document.getElementById('txtColor').value,
-                        fontSize: document.getElementById('fontSize').value,
-                        mergeType: document.getElementById('mergeType').value
-                    },
-                    timestamp: Date.now(),
-                    backupDate: new Date().toLocaleString('ar-EG')
-                };
-                
-                const backupRef = ref(database, 'backups');
-                const newBackupRef = push(backupRef);
-                await set(newBackupRef, backupData);
-                
-                showNotification('✅ تم إنشاء النسخه الاحتياطيه بنجاح');
-            } catch (error) {
-                showNotification('حدث خطأ في إنشاء النسخه الاحتياطيه', true);
-            }
-        }
-
-        async function saveToFirebase() {
-            const headersMain = [];
-            const headersSub = [];
-            const cells = [];
-            
-            document.querySelectorAll('#header-main th').forEach(th => {
-                headersMain.push({
-                    text: th.innerText,
-                    colSpan: th.colSpan || 1,
-                    className: th.className,
-                    style: { minWidth: th.style.minWidth, backgroundColor: th.style.backgroundColor }
-                });
+          });
+          data.headersSub.forEach(sub => {
+            const th = document.createElement('th');
+            th.innerText = sub.text;
+            if (sub.visibility) th.style.visibility = sub.visibility;
+            if (sub.minWidth) th.style.minWidth = sub.minWidth;
+            th.contentEditable = true;
+            headerSub.appendChild(th);
+          });
+          (data.cells || []).forEach(rowData => {
+            const row = document.createElement('tr');
+            rowData.forEach(cellData => {
+              const cell = document.createElement('td');
+              cell.innerText = cellData.text || '';
+              cell.contentEditable = true;
+              if (cellData.backgroundColor) cell.style.backgroundColor = cellData.backgroundColor;
+              if (cellData.color) cell.style.color = cellData.color;
+              if (cellData.fontSize) cell.style.fontSize = cellData.fontSize;
+              if (cellData.height) cell.style.height = cellData.height;
+              row.appendChild(cell);
             });
-            
-            document.querySelectorAll('#header-sub th').forEach(th => {
-                headersSub.push({
-                    text: th.innerText,
-                    visibility: th.style.visibility,
-                    minWidth: th.style.minWidth
-                });
-            });
-            
-            document.querySelectorAll('#table-body tr').forEach(row => {
-                const rowData = [];
-                row.querySelectorAll('td').forEach(cell => {
-                    rowData.push({
-                        text: cell.innerText,
-                        backgroundColor: cell.style.backgroundColor,
-                        color: cell.style.color,
-                        fontSize: cell.style.fontSize,
-                        height: cell.style.height
-                    });
-                });
-                cells.push(rowData);
-            });
-            
-            const dataToSave = {
-                version: 2,
-                colCount: colCount,
-                headersMain: headersMain,
-                headersSub: headersSub,
-                cells: cells,
-                settings: {
-                    cWidth: document.getElementById('cWidth').value,
-                    cHeight: document.getElementById('cHeight').value,
-                    bgColor: document.getElementById('bgColor').value,
-                    txtColor: document.getElementById('txtColor').value,
-                    fontSize: document.getElementById('fontSize').value,
-                    mergeType: document.getElementById('mergeType').value
-                },
-                timestamp: Date.now()
-            };
-            
-            try {
-                await set(ref(database, 'excelData'), dataToSave);
-                showNotification('تم حفظ البيانات');
-            } catch (error) {
-                showNotification('خطأ في الحفظ', true);
-            }
+            tableBody.appendChild(row);
+          });
+          applyColWidths(data.colWidths);
+          makeResizable();
+          syncStickyHeader();
+          markColumnGroups();
+          buildRowNumbers();
+          showNotification('تم التحميل من قاعدة البيانات');
+        } else {
+          createNewTable();
         }
+      } else {
+        createNewTable();
+      }
+    } catch (error) {
+      console.error('خطأ:', error);
+      createNewTable();
+    }
+  }
 
-        async function loadFromFirebase() {
-            try {
-                const snapshot = await get(ref(database, 'excelData'));
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    
-                    if (data.version === 2) {
-                        colCount = data.colCount;
-                        
-                        if (data.settings) {
-                            document.getElementById('cWidth').value = data.settings.cWidth || '60';
-                            document.getElementById('cHeight').value = data.settings.cHeight || '25';
-                            document.getElementById('bgColor').value = data.settings.bgColor || '#ffffff';
-                            document.getElementById('txtColor').value = data.settings.txtColor || '#000000';
-                            document.getElementById('fontSize').value = data.settings.fontSize || '14';
-                            document.getElementById('mergeType').value = data.settings.mergeType || 'none';
-                        }
-                        
-                        const headerMain = document.getElementById('header-main');
-                        const headerSub = document.getElementById('header-sub');
-                        const tableBody = document.getElementById('table-body');
-                        
-                        headerMain.innerHTML = '';
-                        headerSub.innerHTML = '';
-                        tableBody.innerHTML = '';
-                        
-                        data.headersMain.forEach(main => {
-                            const th = document.createElement('th');
-                            th.innerText = main.text;
-                            if (main.colSpan) th.colSpan = main.colSpan;
-                            if (main.className) th.className = main.className;
-                            if (main.style) {
-                                if (main.style.minWidth) th.style.minWidth = main.style.minWidth;
-                                if (main.style.backgroundColor) th.style.backgroundColor = main.style.backgroundColor;
-                            }
-                            th.contentEditable = true;
-                            headerMain.appendChild(th);
-                        });
-                        
-                        data.headersSub.forEach(sub => {
-                            const th = document.createElement('th');
-                            th.innerText = sub.text;
-                            if (sub.visibility) th.style.visibility = sub.visibility;
-                            if (sub.minWidth) th.style.minWidth = sub.minWidth;
-                            th.contentEditable = true;
-                            headerSub.appendChild(th);
-                        });
-                        
-                        data.cells.forEach(rowData => {
-                            const row = document.createElement('tr');
-                            rowData.forEach(cellData => {
-                                const cell = document.createElement('td');
-                                cell.innerText = cellData.text || '';
-                                cell.contentEditable = true;
-                                if (cellData.backgroundColor) cell.style.backgroundColor = cellData.backgroundColor;
-                                if (cellData.color) cell.style.color = cellData.color;
-                                if (cellData.fontSize) cell.style.fontSize = cellData.fontSize;
-                                if (cellData.height) cell.style.height = cellData.height;
-                                row.appendChild(cell);
-                            });
-                            tableBody.appendChild(row);
-                        });
-                        
-                        showNotification('تم التحميل من قاعده البيانات');
-                    } else {
-                        createNewTable();
-                    }
-                } else {
-                    createNewTable();
-                }
-            } catch (error) {
-                console.error('خطأ:', error);
-                createNewTable();
-            }
-        }
+  /* ===== بوابة الدخول ===== */
+  let appInitialized = false;
+  function enterApp() {
+    document.getElementById('loginGate').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    if (!appInitialized) {
+      appInitialized = true;
+      loadFromFirebase();
+    }
+  }
 
-        window.onload = function() {
-            loadFromFirebase();
-        };
-        
-        window.addColumn = addColumn;
-        window.saveToFirebase = saveToFirebase;
-        window.deleteAllData = deleteAllData;
-        window.deleteColumn = deleteColumn;
-        window.deleteRow = deleteRow;
-        window.createBackup = createBackup;
-        window.showPasswordModal = showPasswordModal;
-        window.formatDatabase = formatDatabase;
-        window.deleteDatabase = deleteDatabase;
-    </script>
+  function setupLogin() {
+    const gate = document.getElementById('loginGate');
+    const input = document.getElementById('loginPassword');
+    const btn = document.getElementById('loginBtn');
+    const errBox = document.getElementById('loginError');
+    const card = document.getElementById('loginCard');
+    const toggle = document.getElementById('loginToggle');
+
+    // زر الخروج (يُضبط دائمًا قبل أي تخطٍّ للبوابة)
+    document.getElementById('logoutBtn').onclick = () => {
+      sessionStorage.removeItem('eval_authed');
+      location.reload();
+    };
+
+    initActionsDropdown();
+
+    // تذكّر الجلسة
+    if (sessionStorage.getItem('eval_authed') === '1') {
+      enterApp();
+      return;
+    }
+
+    const tryLogin = () => {
+      if (input.value === PASSWORD) {
+        sessionStorage.setItem('eval_authed', '1');
+        errBox.textContent = '';
+        enterApp();
+      } else {
+        errBox.textContent = 'كلمة المرور غير صحيحة، حاول مرة أخرى';
+        card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+        input.value = '';
+        input.focus();
+      }
+    };
+    btn.onclick = tryLogin;
+    input.onkeypress = (e) => { if (e.key === 'Enter') tryLogin(); };
+    toggle.onclick = () => {
+      input.type = input.type === 'password' ? 'text' : 'password';
+    };
+    input.focus();
+  }
+
+  window.addEventListener('DOMContentLoaded', setupLogin);
+
+  // تعريض الدوال للأزرار
+  window.addColumn = addColumn;
+  window.addMergedColumn = addMergedColumn;
+  window.saveToFirebase = saveToFirebase;
+  window.deleteAllData = deleteAllData;
+  window.deleteColumn = deleteColumn;
+  window.deleteRow = deleteRow;
+  window.createBackup = createBackup;
+  window.showPasswordModal = showPasswordModal;
+  window.formatDatabase = formatDatabase;
+  window.deleteDatabase = deleteDatabase;
+</script>
 </body>
 </html>
